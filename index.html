@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калькулятор темпа Samarkand Marathon</title>
+<meta name="description" content="Ожидаемое время и раскладка темпа по рельефу трассы Samarkand Marathon: 5, 10, 21,1 и 42,2 км.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Калькулятор темпа Samarkand Marathon">
+<meta property="og:description" content="Ожидаемое время, раскладка по километрам и план на подъёмы трассы Samarkand Marathon: 5, 10, 21,1 и 42,2 км.">
+<meta name="theme-color" content="#183c6e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap">
+<style>
+:root{
+  /* Layout: one left-aligned column. Calculator and result side by side, course profile full width, then race-day tools. */
+  --bg:#edf1f4;
+  --surface:#ffffff;
+  --ink:#14233b;
+  --muted:#56667b;
+  --line:#d3dbe4;
+  --lapis:#1f4f8f;
+  --lapis-deep:#183c6e;
+  --turq:#08838c;
+  --ochre:#b06808;
+  --flat:#8995a6;
+  --ok:#1d7a49;
+  --bad:#b3302a;
+  --on-accent:#ffffff;
+  --res-ink:#f3f6fa;
+  --res-muted:rgba(243,246,250,.74);
+  --res-line:rgba(243,246,250,.2);
+  --res-ok:#9fe8c2;
+  --res-bad:#ffb5ac;
+  --font-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --font-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1320;--surface:#121c2d;--ink:#e3eaf3;--muted:#95a4b8;--line:#26354c;
+    --lapis:#86adf0;--lapis-deep:#17335c;--turq:#43c5ca;--ochre:#eca742;--flat:#71829a;
+    --ok:#55c792;--bad:#ff857a;--on-accent:#0b1320;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1320;--surface:#121c2d;--ink:#e3eaf3;--muted:#95a4b8;--line:#26354c;
+  --lapis:#86adf0;--lapis-deep:#17335c;--turq:#43c5ca;--ochre:#eca742;--flat:#71829a;
+  --ok:#55c792;--bad:#ff857a;--on-accent:#0b1320;color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+canvas.tiles{display:block;width:100%;height:14px}
+a{color:var(--lapis)}
+
+header.top{padding:26px 0 20px}
+.meta{margin:0;color:var(--muted);font-weight:500;font-size:15px}
+h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,5.2vw,50px);line-height:1.06;letter-spacing:-.015em;margin:8px 0 12px;text-wrap:balance;max-width:17ch}
+.lede{max-width:62ch;color:var(--muted);margin:0;font-size:17px}
+
+nav.dist{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.dist-in{display:flex;gap:8px;align-items:center;padding-top:10px;padding-bottom:10px;overflow-x:auto}
+.dist button{font-family:var(--font-display);font-weight:700;font-size:15px;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap;min-height:44px}
+.dist button:hover{border-color:var(--lapis)}
+.dist button[aria-pressed="true"]{background:var(--lapis);border-color:var(--lapis);color:var(--on-accent)}
+.dist .when{font-size:14px;color:var(--muted);margin-left:auto;white-space:nowrap;padding-left:12px}
+
+main.wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding-top:20px;padding-bottom:28px}
+main.wrap > *,.calc > *,.two > *{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
+h2{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:1.25;margin:0 0 6px;text-wrap:balance}
+h3{font-size:16px;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 16px;font-size:14px;max-width:72ch}
+
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:20px;align-items:start}
+@media (max-width:840px){.calc{grid-template-columns:1fr}}
+.inputs{display:grid;gap:18px}
+.field{display:grid;gap:6px}
+.lbl{font-weight:600;font-size:14px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px;width:100%}
+input.time{font-family:var(--font-display);font-weight:700;font-size:28px;padding:8px 14px;font-variant-numeric:tabular-nums}
+input:hover,select:hover{border-color:var(--flat)}
+input:focus-visible,select:focus-visible,button:focus-visible,.filebtn:focus-within,tr[tabindex]:focus-visible{outline:3px solid var(--turq);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted);min-height:1.35em;margin:0}
+.hint.err{color:var(--bad);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:600 14px/1 var(--font-body);font-variant-numeric:tabular-nums;padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:36px}
+.chips button:hover{border-color:var(--lapis)}
+.chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;justify-self:start}
+.seg button{border:0;background:transparent;font:600 14px var(--font-body);color:var(--muted);padding:8px 14px;border-radius:9px;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,35,59,.18)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:440px){.row2{grid-template-columns:1fr}}
+[hidden]{display:none !important}
+
+.result{background:var(--lapis-deep);color:var(--res-ink);border:0;padding:0;overflow:hidden}
+.result canvas.tiles{height:12px}
+.res-in{padding:20px 22px 22px;display:grid;gap:16px}
+.res-label{margin:0;color:var(--res-muted);font-weight:500}
+.big{margin:0;font-family:var(--font-display);font-weight:800;font-size:clamp(52px,10.5vw,96px);line-height:.95;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;margin:0}
+.facts div{border-top:1px solid var(--res-line);padding-top:8px}
+.facts dt{font-size:13px;color:var(--res-muted)}
+.facts dd{margin:2px 0 0;font-family:var(--font-display);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums}
+.facts dd small{font-family:var(--font-body);font-weight:500;font-size:13px;color:var(--res-muted)}
+.facts .good{color:var(--res-ok)} .facts .bad{color:var(--res-bad)}
+.pred h3{font-size:14px;font-weight:600;color:var(--res-muted);margin:0 0 4px}
+.pred table{font-size:15px}
+.pred th{color:var(--res-muted);border-bottom-color:var(--res-line)}
+.pred td{border-bottom-color:var(--res-line)}
+.pred tr[tabindex]{cursor:pointer}
+.pred tr[tabindex]:hover td{background:rgba(255,255,255,.06)}
+.pred tr.cur td{font-weight:700}
+
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:15px}
+th{font-weight:600;color:var(--muted);font-size:13px;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+td.l,th.l{text-align:left}
+.tbl{overflow-x:auto}
+tr.hl td{font-weight:700}
+tr.half td{background:var(--bg)}
+td .bad{color:var(--bad)} td .good{color:var(--ok)}
+
+.prof-head{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);margin:4px 0 12px;padding:0;list-style:none}
+.legend li{display:flex;align-items:center;gap:6px}
+.sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+.sw.up{background:var(--ochre);opacity:.75}.sw.flat{background:var(--flat);opacity:.6}.sw.down{background:var(--turq);opacity:.75}
+.sw.aid{width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--turq)}
+.sw.turn{width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--ink)}
+.src{font-size:13px;color:var(--muted);margin:0}
+.src b{color:var(--ink);font-weight:600}
+.chart{position:relative;width:100%;min-height:200px}
+.chart svg{display:block;width:100%;max-width:100%;height:auto;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.ax{fill:var(--muted);font:500 11px var(--font-body);font-variant-numeric:tabular-nums}
+.gridl{stroke:var(--line);stroke-width:1}
+.a-up{fill:var(--ochre);fill-opacity:.45}.a-flat{fill:var(--flat);fill-opacity:.32}.a-down{fill:var(--turq);fill-opacity:.45}
+.pline{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+.segline{stroke:var(--muted);stroke-dasharray:3 3;stroke-width:1;opacity:.7}
+.plabel{font:700 11px var(--font-display);font-variant-numeric:tabular-nums}
+.p-up{fill:var(--ochre)}.p-down{fill:var(--turq)}.p-flat{fill:var(--ink)}
+.b-up{fill:var(--ochre)}.b-down{fill:var(--turq)}.b-flat{fill:var(--flat)}
+.aidm{fill:var(--surface);stroke:var(--turq);stroke-width:2}
+.turnm{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.hvline{stroke:var(--ink);stroke-width:1;opacity:.6}
+.hvdot{fill:var(--ink)}
+.tip{position:absolute;top:6px;left:0;pointer-events:none;background:var(--ink);color:var(--surface);font-size:13px;line-height:1.4;padding:8px 10px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .12s;z-index:2}
+.tip b{font-weight:700}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:80ch}
+
+.map{position:relative;width:100%}
+.map svg{display:block;width:100%;height:auto;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.map-empty{border:1px dashed var(--line);border-radius:10px;padding:28px 16px;color:var(--muted);text-align:center;font-size:14px}
+.rt{fill:none;stroke:var(--lapis);stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
+.rt-halo{fill:none;stroke:var(--surface);stroke-width:7;stroke-linejoin:round;stroke-linecap:round}
+.lm{fill:var(--ink)} .lm-t{fill:var(--ink);font:600 12px var(--font-body)} .lm-area{fill:var(--muted);font:italic 500 13px var(--font-body);letter-spacing:.04em}
+.sf{fill:var(--ochre);stroke:var(--surface);stroke-width:2}
+.tam{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.ta-t{fill:var(--muted);font:500 11px var(--font-body);font-variant-numeric:tabular-nums}
+.mapdot{fill:var(--ochre);stroke:var(--surface);stroke-width:2}
+.scale{stroke:var(--muted);stroke-width:1.5}
+.lm-t,.ta-t{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:840px){.two{grid-template-columns:1fr}}
+
+pre.card{font:500 13px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;background:var(--bg);border:1px dashed var(--flat);border-radius:10px;padding:14px;overflow-x:auto;margin:0 0 12px;white-space:pre;color:var(--ink)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:600 15px var(--font-body);padding:10px 16px;border-radius:10px;border:1px solid var(--lapis);background:var(--lapis);color:var(--on-accent);cursor:pointer;min-height:44px}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--lapis)}
+.status{font-size:14px;color:var(--muted);margin:0}
+.status.ok{color:var(--ok)} .status.err{color:var(--bad)}
+
+ol.guide{list-style:none;margin:0;padding:0}
+ol.guide li{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:2px 14px;padding:14px 0;border-top:1px solid var(--line)}
+ol.guide li:first-child{border-top:0;padding-top:4px}
+.gnum{font:800 18px/1.2 var(--font-display);color:var(--flat);grid-row:span 3}
+.gname{font-weight:700;font-size:17px;line-height:1.3}
+.gkm{color:var(--muted);font-size:14px}
+.gpace{font:700 20px/1.2 var(--font-display);text-align:right;font-variant-numeric:tabular-nums}
+.gtime{font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.gtext{grid-column:2 / 4;margin:6px 0 0;max-width:72ch}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.pill.up{color:var(--ochre)}.pill.down{color:var(--turq)}.pill.flat,.pill.roll{color:var(--muted)}
+
+dl.course{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 16px;margin:0 0 14px}
+dl.course dt{color:var(--muted);font-size:14px}
+dl.course dd{margin:0;font-weight:600}
+.course-desc{margin:0;max-width:65ch}
+.filebtn{position:relative;display:inline-flex;align-items:center}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;min-height:0;padding:0}
+
+footer{padding:8px 0 40px;color:var(--muted);font-size:14px}
+footer .cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px}
+@media (max-width:840px){footer .cols{grid-template-columns:1fr}}
+footer h2{font-size:16px;color:var(--ink)}
+footer p{margin:0 0 10px;max-width:70ch}
+footer ul{margin:0;padding-left:18px}
+
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  .panel{padding:16px}
+  .res-in{padding:18px 16px 20px}
+  .hide-m{display:none}
+  .dist .when{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+@media print{
+  nav.dist,.inputs,.gpxp,canvas.tiles,.actions,footer{display:none !important}
+  body{background:#fff}
+  .panel{border:1px solid #999;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<canvas class="tiles" aria-hidden="true"></canvas>
+<header class="top">
+  <div class="wrap">
+    <p class="meta">Samarkand Marathon, 7–8 ноября 2026, старт и финиш на Регистане</p>
+    <h1>Темп по трассе Самарканда</h1>
+    <p class="lede">Задайте цель или недавний результат. Калькулятор разложит время по участкам с учётом подъёмов и спусков, покажет контрольные точки и соберёт карточку на забег.</p>
+  </div>
+</header>
+
+<nav class="dist" aria-label="Дистанция">
+  <div class="wrap dist-in" id="distTabs">
+    <button type="button" data-d="5k">5 км</button>
+    <button type="button" data-d="10k">10 км</button>
+    <button type="button" data-d="half">21,1 км</button>
+    <button type="button" data-d="marathon">42,2 км</button>
+    <span class="when" id="distWhen"></span>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="calc" aria-label="Калькулятор">
+    <form class="panel inputs" id="form" autocomplete="off">
+      <div class="seg" role="group" aria-label="Способ расчёта">
+        <button type="button" data-mode="target">Цель</button>
+        <button type="button" data-mode="predict">Прогноз по результату</button>
+      </div>
+
+      <div id="paneTarget" class="field" style="gap:12px">
+        <div class="field">
+          <label class="lbl" for="target">Время на финише</label>
+          <input class="time" id="target" inputmode="numeric" placeholder="3:59:00" spellcheck="false">
+          <p class="hint" id="targetHint"></p>
+        </div>
+        <div class="field">
+          <span class="lbl" id="chipsLbl">Популярные цели</span>
+          <div class="chips" id="chips" role="group" aria-labelledby="chipsLbl"></div>
+        </div>
+      </div>
+
+      <div id="paneResult" class="field" style="gap:12px" hidden>
+        <div class="row2">
+          <div class="field">
+            <label class="lbl" for="resDist">Недавний старт</label>
+            <select id="resDist">
+              <option value="5">5 км</option>
+              <option value="10">10 км</option>
+              <option value="21.0975">21,1 км</option>
+              <option value="42.195">42,2 км</option>
+              <option value="other">Другая дистанция</option>
+            </select>
+          </div>
+          <div class="field" id="resKmWrap" hidden>
+            <label class="lbl" for="resKm">Дистанция, км</label>
+            <input id="resKm" inputmode="decimal" placeholder="15">
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="resTime">Ваше время на нём</label>
+          <input class="time" id="resTime" inputmode="numeric" placeholder="50:00" spellcheck="false">
+          <p class="hint" id="resHint"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="riegel">Выносливость под длинную дистанцию</label>
+          <select id="riegel">
+            <option value="1.05">Много объёмов и длинных (k = 1,05)</option>
+            <option value="1.06">Обычная подготовка (k = 1,06)</option>
+            <option value="1.08">Мало длинных тренировок (k = 1,08)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="strategy">Как бежать</label>
+          <select id="strategy">
+            <option value="even">Ровное усилие</option>
+            <option value="neg">Негативный сплит</option>
+            <option value="careful">Осторожный старт</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl" for="temp">Температура на старте, °C</label>
+          <input id="temp" inputmode="numeric" type="number" min="-15" max="40" step="1">
+        </div>
+      </div>
+      <p class="hint" id="tempHint" style="margin-top:-10px"></p>
+    </form>
+
+    <section class="panel result" aria-live="polite" aria-label="Результат">
+      <canvas class="tiles" aria-hidden="true"></canvas>
+      <div class="res-in">
+        <div>
+          <p class="res-label" id="resLabel">План на финиш</p>
+          <p class="big" id="rTime">0:00</p>
+        </div>
+        <dl class="facts" id="facts"></dl>
+        <div class="pred" id="pred" hidden>
+          <h3>Прогноз на все дистанции Samarkand</h3>
+          <div class="tbl"><table id="predTable"></table></div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <section class="panel" aria-labelledby="hProf">
+    <div class="prof-head">
+      <h2 id="hProf">Профиль трассы и темп по участкам</h2>
+      <p class="src" id="profSrc"></p>
+    </div>
+    <ul class="legend">
+      <li><span class="sw up"></span>подъём</li>
+      <li><span class="sw flat"></span>ровно</li>
+      <li><span class="sw down"></span>спуск</li>
+      <li><span class="sw aid"></span>пункт питания</li>
+      <li id="legTurn"><span class="sw turn"></span>разворот</li>
+    </ul>
+    <div class="chart" id="chart"></div>
+    <p class="note">Сверху целевой темп каждого участка. Столбики внизу: насколько каждый километр медленнее (вверх) или быстрее (вниз) среднего темпа. Наведите или коснитесь графика, чтобы увидеть детали.</p>
+  </section>
+
+  <section class="two">
+    <div class="panel" aria-labelledby="hMap">
+      <h2 id="hMap">Схема трассы</h2>
+      <p class="sub" id="mapSub">Наведите или коснитесь трассы: покажу, на каких километрах вы будете в этой точке и во сколько.</p>
+      <div class="map" id="map"></div>
+    </div>
+    <div class="panel" aria-labelledby="hCourse">
+      <h2 id="hCourse">О трассе</h2>
+      <dl class="course" id="course"></dl>
+      <p class="course-desc" id="courseDesc"></p>
+    </div>
+  </section>
+
+  <section class="two">
+    <div class="panel" aria-labelledby="hCp">
+      <h2 id="hCp">Контрольные точки</h2>
+      <p class="sub" id="cpSub"></p>
+      <div class="tbl"><table id="cpTable"></table></div>
+    </div>
+    <div class="panel" aria-labelledby="hCard">
+      <h2 id="hCard">Карточка в карман</h2>
+      <p class="sub">Скопируйте в заметки или распечатайте. В Telegram вставляйте внутри блока кода, тогда колонки останутся ровными.</p>
+      <pre class="card" id="card"></pre>
+      <div class="actions">
+        <button type="button" class="btn" id="copyBtn">Скопировать карточку</button>
+        <p class="status" id="copyStatus" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="hGuide">
+    <h2 id="hGuide">Как бежать по участкам</h2>
+    <p class="sub">Темп меняется вместе с рельефом, а усилие остаётся ровным. Время на участке и итог на его конце указаны справа.</p>
+    <ol class="guide" id="guide"></ol>
+  </section>
+
+  <section class="panel" aria-labelledby="hSplits">
+    <h2 id="hSplits">Раскладка по километрам</h2>
+    <p class="sub">Высота: изменение за километр. «На часах» считается от времени старта вашей дистанции.</p>
+    <div class="tbl"><table id="splits"></table></div>
+  </section>
+
+  <section class="panel gpxp" aria-labelledby="hGpx">
+    <h2 id="hGpx">Свой GPX</h2>
+    <p class="sub">Все четыре дистанции уже посчитаны по официальным картам и профилям высот. Если хотите проверить расчёт по своему треку с часов, выберите дистанцию вверху и загрузите GPX: расчёт пересчитается по нему. Файл обрабатывается только в вашем браузере. Если в треке нет высот, профиль останется прежним.</p>
+    <div class="actions">
+      <span class="filebtn btn"><span>Загрузить GPX</span><input type="file" id="gpxFile" accept=".gpx,application/gpx+xml,application/xml,text/xml" aria-label="Загрузить GPX"></span>
+      <button type="button" class="btn ghost" id="gpxReset" hidden>Вернуть трассу по умолчанию</button>
+    </div>
+    <p class="status" id="gpxStatus" role="status" style="margin-top:10px"></p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap cols">
+    <div>
+      <h2>Как считается</h2>
+      <p>Прогноз по результату использует формулу Ригеля: T₂ = T₁ × (D₂ / D₁)<sup>k</sup>. Чем меньше длинных тренировок, тем выше k и тем осторожнее прогноз на длинную дистанцию.</p>
+      <p>Рельеф: трасса разбита на отрезки по 50 м, каждый получает коэффициент усилия по уклону (подъём 1% примерно +3,5% ко времени, спуск 1% примерно −2,4%). Время распределяется так, чтобы усилие было ровным, поэтому на подъёмах темп медленнее, а на спусках быстрее. Каждый разворот добавляет около 3 с.</p>
+      <p>Погода: выше 12 °C время растёт на 0,12–0,35% за градус в зависимости от дистанции, ниже 0 °C примерно на 0,2% за градус.</p>
+      <p>Трасса: маршруты полумарафона и марафона взяты из официальных GPX-треков SM 2025, трассы 10 и 5 км собраны по тем же улицам по картам организатора. Высоты для каждой дистанции сняты с её официального профиля на карте. Марафонский профиль я дополнительно сверил со спутниковой моделью рельефа SRTM: разница в среднем около 5 м. Набор по официальным профилям: около 230 м на марафоне, 170 м на полумарафоне, 75 м на 10 км и 95 м на 5 км. Графики разных дистанций нарисованы с разной детализацией, поэтому полумарафон не равен ровно половине марафона. На сайтах-агрегаторах указано 120 и 60 м, но с профилями организатора это не сходится.</p>
+      <p>Это ориентир для планирования, а не гарантия результата. Расписание и лимиты взяты из данных организатора на октябрь 2026, перед стартом сверьтесь с гайдом участника.</p>
+    </div>
+    <div>
+      <h2>Источники</h2>
+      <ul>
+        <li><a href="https://events.samarkandmarathon.uz">Регистрация Samarkand Marathon</a></li>
+        <li><a href="https://www.finishers.com/no/arrangement/samarkand-maraton">Finishers: расписание и лимиты</a></li>
+        <li><a href="https://www.marathons.com/fr/events/marathon-de-samarcande_wDLKr">Marathons.com: дистанции и набор высоты</a></li>
+        <li><a href="https://voyage.uz/samarkand/events/samarkand-marathon-2026/">Voyage.uz: старт и закрытие трассы 10 км</a></li>
+        <li><a href="https://pulse-path.github.io/">Гайд трассы «Бегаю по пульсу»: пункты питания</a></li>
+        <li>Официальные карты и профили трасс Samarkand Marathon: 42,2, 21,1, 10 и 5 км</li>
+        <li><a href="https://www.opentopodata.org/">Open Topo Data: высоты SRTM 30 м для проверки</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+<canvas class="tiles" aria-hidden="true"></canvas>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const HALF = 21.0975, MAR = 42.195, STEP = 0.05;
+const MINUS = '−';
+
+/* ---------- Course data ----------
+   Route: official SM 2025 GPX tracks (21.1 and 42.2 km); the 10 and 5 km routes are assembled from the same
+   streets following the organizer's maps. Elevation: digitized from each distance's official course profile
+   (organizer maps), the marathon cross-checked against SRTM 30 m (RMS difference ~5 m). Arrays every 100 m. */
+const TRACK = {
+  k10: {ele: [723.5,720.9,718,715.5,713.7,712.5,712.4,713.2,714.6,716.1,717.9,719.2,719.3,719.3,719.3,718.4,717,715.6,714.2,712.6,710.7,708.2,705.2,701.6,697.8,694.5,692.1,691,690.3,691.1,692,692.9,693.1,693.1,692.8,692.4,691.7,691.7,691,691,691,691,691.7,691.7,692.4,692.4,692.4,692.4,692.4,691.9,691.1,691,691.3,692.3,694.6,697.3,700.5,704,707.1,709.6,711.4,713.1,714.4,715.7,717.4,718.9,720.9,723.2,725.6,728,730.4,733,735.6,737.4,738.9,740,741,741.6,742.1,742.1,742.1,739.3,741.5,741.4,740.7,739.2,737.2,734.6,731.2,727.2,723.2,719.3,715.9,713.5,712.3,712.2,713.2,714.9,717.5,720.4,723.1],
+    geo: [39.65347,66.97591,39.65343,66.97476,39.65338,66.97361,39.65322,66.97249,39.65285,66.97144,39.65248,66.97040,39.65214,66.96934,39.65177,66.96829,39.65137,66.96727,39.65099,66.96623,39.65090,66.96510,39.65120,66.96403,39.65170,66.96308,39.65229,66.96223,39.65313,66.96195,39.65401,66.96179,39.65489,66.96183,39.65577,66.96193,39.65666,66.96199,39.65754,66.96206,39.65838,66.96239,39.65921,66.96278,39.66004,66.96317,39.66088,66.96354,39.66174,66.96379,39.66262,66.96396,39.66350,66.96408,39.66438,66.96411,39.66527,66.96406,39.66615,66.96396,39.66703,66.96384,39.66791,66.96375,39.66879,66.96379,39.66967,66.96393,39.67054,66.96412,39.67141,66.96435,39.67221,66.96480,39.67275,66.96565,39.67304,66.96673,39.67326,66.96784,39.67341,66.96838,39.67328,66.96724,39.67304,66.96614,39.67266,66.96512,39.67198,66.96442,39.67113,66.96412,39.67026,66.96389,39.66939,66.96369,39.66851,66.96358,39.66763,66.96362,39.66675,66.96372,39.66587,66.96384,39.66498,66.96393,39.66410,66.96398,39.66322,66.96390,39.66234,66.96379,39.66147,66.96358,39.66061,66.96328,39.65978,66.96291,39.65895,66.96250,39.65813,66.96207,39.65726,66.96187,39.65638,66.96179,39.65549,66.96171,39.65461,66.96163,39.65373,66.96165,39.65286,66.96185,39.65205,66.96233,39.65150,66.96322,39.65094,66.96411,39.65008,66.96402,39.64935,66.96339,39.64862,66.96273,39.64788,66.96210,39.64712,66.96151,39.64637,66.96089,39.64564,66.96026,39.64490,66.95963,39.64416,66.95900,39.64342,66.95836,39.64298,66.95888,39.64372,66.95951,39.64446,66.96014,39.64520,66.96076,39.64594,66.96141,39.64666,66.96207,39.64739,66.96272,39.64812,66.96337,39.64885,66.96401,39.64958,66.96466,39.65027,66.96538,39.65089,66.96619,39.65126,66.96724,39.65164,66.96828,39.65202,66.96931,39.65239,66.97036,39.65275,66.97141,39.65311,66.97246,39.65325,66.97359,39.65332,66.97474,39.65340,66.97588]},
+  k5: {ele: [723,719.2,714.6,710.1,704.5,698.8,696.4,701.9,709.6,716.6,720.3,722.5,722,720,718,717.3,718.3,720.3,722.4,725,729.5,735.8,742.8,747.5,750.8,753.2,753.9,752.2,749,747.1,748.2,750.8,754.4,755.8,753.9,749.8,745.6,742.6,739.3,733.6,725.4,717,709.9,702.9,697.3,698.6,703.6,709.1,713.5,718.6,723.2],
+    geo: [39.65347,66.97591,39.65343,66.97474,39.65338,66.97357,39.65320,66.97242,39.65282,66.97136,39.65244,66.97030,39.65210,66.96922,39.65172,66.96816,39.65131,66.96712,39.65094,66.96606,39.65092,66.96489,39.65129,66.96383,39.65182,66.96288,39.65247,66.96211,39.65336,66.96190,39.65422,66.96173,39.65339,66.96172,39.65253,66.96203,39.65181,66.96269,39.65125,66.96361,39.65056,66.96412,39.64974,66.96372,39.64899,66.96306,39.64824,66.96241,39.64748,66.96179,39.64671,66.96117,39.64596,66.96053,39.64521,66.95989,39.64445,66.95925,39.64370,66.95860,39.64294,66.95863,39.64346,66.95929,39.64421,66.95994,39.64497,66.96057,39.64572,66.96121,39.64646,66.96189,39.64720,66.96255,39.64794,66.96321,39.64869,66.96387,39.64943,66.96453,39.65015,66.96524,39.65080,66.96604,39.65121,66.96708,39.65159,66.96814,39.65198,66.96920,39.65236,66.97026,39.65273,66.97133,39.65309,66.97240,39.65324,66.97355,39.65332,66.97472,39.65340,66.97588]},
+  half: {ele: [720.4,718,714.4,711.4,708.8,706.9,707.3,711.4,715.9,719.3,722,723.2,723.4,723,722.1,720.8,719.2,717.7,716,714.3,713.1,711.6,709.7,707.1,703.3,698.9,694.9,694,695.8,698.5,700.7,701.4,701.1,700,698.9,697.8,696.7,697.1,699,700.8,702,703.2,704.2,704.8,705.2,705.5,705.5,705,704.7,704,702.9,701.1,698.4,695.5,692.9,691.8,692.2,694.3,696.1,697.1,697.8,697.6,696.9,695.3,692.5,689.1,687.1,687.8,690.9,694.8,698.9,703,706.9,710,712.1,713.1,713.1,712.7,712.1,711.7,711.2,711.6,712.2,713.4,714.9,716.4,718,719.3,720.8,722.1,723.2,723.9,724.6,725.3,725.5,725.5,725.5,725.4,724.7,724,723.3,722.4,721.4,720.1,719.1,717.9,716.5,715.2,713.9,712.5,711.1,710.2,710.1,710.6,711,711,710.9,710.1,708.3,705.3,701.5,697.4,693.4,690.1,688.1,687.8,689.5,692.4,695.2,698,699.9,701.1,700.9,699.8,698.1,696,693.6,692,693,697.2,700.8,703,704.4,705.3,705.6,706.2,705.7,705.3,704.5,703.4,702.1,700.7,699.2,697.9,696.7,697.3,699.1,701.1,702.3,702.8,701.7,700.9,698.3,695.7,694.2,694.5,697.4,701.5,704.9,707.2,709.3,711.2,712.9,714.5,716.1,717.7,719,720.7,722.2,723.8,725.4,726.9,728.3,730,731.4,732.9,734.2,735.3,736.3,737.3,738.2,738.9,739.3,739.3,739.2,738.4,737,734.7,731.7,728.4,724.9,721,717.6,714.2,711.3,708.8,707.7,709.6,712.5,715.3,718.1,720.1],
+    geo: [39.65347,66.97591,39.65343,66.97475,39.65338,66.97358,39.65321,66.97244,39.65283,66.97138,39.65245,66.97032,39.65211,66.96924,39.65173,66.96819,39.65132,66.96715,39.65094,66.96610,39.65090,66.96496,39.65123,66.96393,39.65175,66.96298,39.65236,66.96214,39.65324,66.96192,39.65413,66.96177,39.65503,66.96184,39.65592,66.96195,39.65682,66.96200,39.65771,66.96207,39.65856,66.96247,39.65940,66.96287,39.66025,66.96327,39.66110,66.96364,39.66198,66.96385,39.66287,66.96400,39.66377,66.96411,39.66466,66.96411,39.66556,66.96403,39.66645,66.96392,39.66735,66.96379,39.66824,66.96372,39.66914,66.96384,39.67003,66.96400,39.67091,66.96421,39.67179,66.96446,39.67254,66.96507,39.67292,66.96610,39.67314,66.96723,39.67337,66.96836,39.67268,66.96889,39.67182,66.96924,39.67095,66.96952,39.67008,66.96978,39.66919,66.96991,39.66830,66.97009,39.66807,66.97121,39.66778,66.97231,39.66740,66.97337,39.66701,66.97442,39.66664,66.97548,39.66626,66.97654,39.66589,66.97760,39.66549,66.97865,39.66506,66.97967,39.66448,66.98056,39.66384,66.98138,39.66317,66.98216,39.66254,66.98299,39.66219,66.98406,39.66191,66.98516,39.66164,66.98628,39.66136,66.98739,39.66135,66.98853,39.66189,66.98944,39.66259,66.99017,39.66329,66.99090,39.66393,66.99166,39.66355,66.99270,39.66307,66.99369,39.66263,66.99470,39.66229,66.99578,39.66196,66.99687,39.66163,66.99795,39.66129,66.99904,39.66096,67.00012,39.66062,67.00120,39.66026,67.00227,39.65990,67.00334,39.65967,67.00447,39.65958,67.00563,39.65959,67.00679,39.65964,67.00796,39.65970,67.00912,39.65961,67.01028,39.65950,67.01144,39.65940,67.01260,39.65929,67.01376,39.65918,67.01492,39.65908,67.01608,39.65897,67.01724,39.65886,67.01839,39.65873,67.01955,39.65851,67.02068,39.65827,67.02181,39.65802,67.02293,39.65826,67.02205,39.65852,67.02094,39.65875,67.01981,39.65889,67.01866,39.65900,67.01750,39.65912,67.01634,39.65923,67.01518,39.65934,67.01402,39.65945,67.01287,39.65956,67.01171,39.65967,67.01055,39.65977,67.00939,39.65974,67.00822,39.65968,67.00706,39.65966,67.00589,39.65971,67.00473,39.65991,67.00359,39.66025,67.00251,39.66059,67.00143,39.66093,67.00035,39.66127,66.99927,39.66162,66.99819,39.66196,66.99711,39.66230,66.99603,39.66263,66.99495,39.66305,66.99392,39.66351,66.99292,39.66398,66.99192,39.66360,66.99104,39.66289,66.99033,39.66218,66.98962,39.66152,66.98882,39.66137,66.98770,39.66164,66.98658,39.66192,66.98547,39.66220,66.98436,39.66251,66.98327,39.66310,66.98240,39.66376,66.98161,39.66443,66.98083,39.66502,66.97996,39.66551,66.97898,39.66590,66.97793,39.66629,66.97688,39.66666,66.97581,39.66703,66.97475,39.66742,66.97370,39.66782,66.97265,39.66814,66.97157,39.66837,66.97044,39.66907,66.96999,39.66996,66.96987,39.67084,66.96962,39.67172,66.96935,39.67258,66.96902,39.67343,66.96867,39.67334,66.96753,39.67311,66.96640,39.67280,66.96531,39.67218,66.96449,39.67132,66.96417,39.67044,66.96393,39.66956,66.96372,39.66867,66.96357,39.66777,66.96360,39.66688,66.96370,39.66598,66.96383,39.66509,66.96392,39.66419,66.96399,39.66329,66.96391,39.66240,66.96380,39.66152,66.96360,39.66065,66.96330,39.65980,66.96292,39.65896,66.96250,39.65813,66.96206,39.65725,66.96187,39.65635,66.96179,39.65546,66.96171,39.65456,66.96162,39.65367,66.96165,39.65279,66.96187,39.65201,66.96235,39.65146,66.96328,39.65090,66.96418,39.65011,66.96404,39.64936,66.96340,39.64862,66.96273,39.64787,66.96209,39.64710,66.96150,39.64634,66.96086,39.64559,66.96022,39.64484,66.95958,39.64409,66.95894,39.64334,66.95829,39.64281,66.95874,39.64356,66.95938,39.64431,66.96002,39.64507,66.96065,39.64582,66.96130,39.64655,66.96197,39.64729,66.96263,39.64803,66.96329,39.64878,66.96395,39.64952,66.96460,39.65022,66.96532,39.65086,66.96611,39.65124,66.96717,39.65162,66.96822,39.65201,66.96928,39.65239,66.97034,39.65275,66.97140,39.65312,66.97247,39.65325,66.97361,39.65332,66.97477,39.65340,66.97591,39.65340,66.97591]},
+  marathon: {ele: [721,719.5,717,714.7,712.9,711.7,711.4,712,713.3,714.5,715.5,716.2,716.5,716.6,716.3,715.9,715,713.9,712.5,710.9,709,706.5,703.7,700.5,697.1,693.7,691.1,690,690.1,690.8,691.5,692.1,692.4,692.4,692.4,692.3,692.1,692.1,692.6,693,693.9,694.9,695.7,696.5,697,697.2,696.8,696.1,695.1,694,692.6,691.5,690.6,689.9,689.3,688.7,688.4,688.4,688.7,688.7,688.2,687.6,686.6,685.3,684.3,683.7,683.9,685,686.8,689.4,692.3,695.3,697.9,700.2,702.4,704.1,705.5,706.9,708.2,709.3,710.4,711.6,712.7,713.7,714.6,715.6,716.5,717.5,718.3,719,719.7,720.3,720.9,721.3,721.8,722.2,722.5,722.8,722.8,722.8,722.8,722.8,722.8,722.8,722.8,722.6,722.3,721.9,721.5,720.9,720.3,719.6,718.9,718,717,716.2,715.2,714.2,713.4,712.2,711.2,710.1,708.8,707.7,706.6,705.1,703.4,701.7,699.7,697.3,694.8,692,689.3,687.2,685.7,685,685,685.4,686.2,687.1,687.8,688.2,688.6,688.7,688.6,688.6,688.9,689.4,690,690.9,692.2,693.5,694.6,695.6,696.6,697.1,697.2,697.1,696.7,695.7,694.7,693.7,692.9,692.3,692,691.7,691.7,691.7,691.5,691.2,691,690.7,690.4,690.6,691.3,692.8,695.2,698,701.1,704.2,706.9,709.3,711.2,713,714.9,716.6,718.4,720.2,722.1,724.2,726.3,728.2,730.2,732,733.7,735.1,736.5,737.6,738.6,739.3,739.7,739.8,739.5,739,738.2,737.3,736.2,734.9,733.3,731.5,729.5,727.5,725.5,723.6,721.7,719.9,718.2,716.6,715.2,713.5,711.8,709.9,707.8,705.2,702.2,698.9,695.6,692.8,691,690.3,690.4,691,691.8,692.2,692.4,692.4,692.4,692.4,692.5,692.8,693.3,693.7,694.4,695.3,696.1,696.5,696.6,696.5,696.1,695.3,694.3,693.2,692.2,691.3,690.6,690,689.4,689.1,689,689,689,688.8,688.3,687.3,686.2,685.1,684.5,684.3,684.9,686.2,688.2,690.9,693.8,696.6,698.9,701,703,704.7,706.2,707.4,708.6,709.7,710.8,711.8,712.7,713.7,714.8,715.8,716.7,717.7,718.6,719.3,719.9,720.5,721.1,721.7,722.2,722.5,722.7,722.8,722.8,722.8,722.8,722.8,722.8,722.6,722.3,722,721.7,721.2,720.7,720,719.4,718.8,717.9,717.2,716.4,715.4,714.3,713.4,712.4,711.4,710.4,709.3,708.1,706.7,705.3,703.8,701.8,699.8,697.8,695.6,693,690.2,688,686.4,685.3,684.8,685,685.5,686.2,686.9,687.5,687.6,687.6,687.6,687.6,687.8,688.2,689,689.7,690.8,692.1,693.6,694.9,695.9,696.6,697.1,697.1,696.7,696,695.3,694.4,693.6,692.9,692.3,692,691.7,691.7,691.7,691.5,691.2,690.8,690.5,690.4,690.8,692,693.9,696.4,699.5,702.6,705.6,708.1,710.2,712.1,713.8,715.5,717.2,719.1,721,723.1,725.2,727.3,729.3,731.2,732.9,734.3,735.7,737.2,738.3,739,739.6,739.7,739.6,739,738.4,737.5,736.3,734.6,732.6,730.3,727.2,723.7,720,716.3,713.1,710.8,710.1,710.6,712.1,714.4,717.4,719.4,719.4],
+    geo: [39.65347,66.97591,39.65341,66.97474,39.65337,66.97358,39.65320,66.97244,39.65287,66.97136,39.65250,66.97030,39.65211,66.96925,39.65172,66.96819,39.65134,66.96714,39.65096,66.96608,39.65089,66.96496,39.65124,66.96392,39.65178,66.96300,39.65241,66.96219,39.65328,66.96193,39.65417,66.96182,39.65507,66.96189,39.65596,66.96197,39.65686,66.96203,39.65775,66.96214,39.65859,66.96254,39.65944,66.96294,39.66028,66.96333,39.66114,66.96369,39.66202,66.96389,39.66291,66.96403,39.66381,66.96413,39.66471,66.96413,39.66560,66.96406,39.66649,66.96395,39.66739,66.96383,39.66828,66.96377,39.66918,66.96387,39.67007,66.96404,39.67095,66.96428,39.67182,66.96452,39.67257,66.96513,39.67293,66.96618,39.67315,66.96731,39.67336,66.96845,39.67261,66.96890,39.67175,66.96925,39.67089,66.96955,39.67000,66.96976,39.66911,66.96992,39.66829,66.97023,39.66802,66.97133,39.66767,66.97241,39.66731,66.97348,39.66695,66.97454,39.66657,66.97560,39.66619,66.97666,39.66581,66.97771,39.66542,66.97877,39.66495,66.97975,39.66436,66.98062,39.66371,66.98144,39.66306,66.98224,39.66247,66.98311,39.66213,66.98418,39.66185,66.98529,39.66158,66.98641,39.66132,66.98752,39.66135,66.98867,39.66195,66.98951,39.66265,66.99024,39.66336,66.99096,39.66397,66.99173,39.66351,66.99274,39.66306,66.99375,39.66261,66.99476,39.66228,66.99584,39.66196,66.99693,39.66162,66.99801,39.66128,66.99909,39.66094,67.00017,39.66059,67.00124,39.66025,67.00232,39.65990,67.00340,39.65966,67.00452,39.65957,67.00568,39.65958,67.00684,39.65966,67.00800,39.65970,67.00917,39.65961,67.01033,39.65950,67.01149,39.65940,67.01264,39.65929,67.01380,39.65918,67.01496,39.65907,67.01612,39.65896,67.01727,39.65884,67.01843,39.65869,67.01958,39.65849,67.02072,39.65824,67.02183,39.65799,67.02296,39.65774,67.02407,39.65761,67.02522,39.65765,67.02638,39.65770,67.02754,39.65775,67.02870,39.65771,67.02753,39.65768,67.02637,39.65766,67.02520,39.65782,67.02407,39.65808,67.02295,39.65833,67.02183,39.65857,67.02070,39.65877,67.01957,39.65894,67.01842,39.65904,67.01726,39.65914,67.01610,39.65925,67.01495,39.65936,67.01379,39.65947,67.01263,39.65958,67.01147,39.65967,67.01031,39.65975,67.00915,39.65972,67.00799,39.65968,67.00682,39.65970,67.00566,39.65974,67.00449,39.65999,67.00337,39.66034,67.00230,39.66069,67.00122,39.66104,67.00015,39.66138,66.99907,39.66171,66.99798,39.66204,66.99690,39.66236,66.99581,39.66272,66.99474,39.66318,66.99374,39.66364,66.99274,39.66405,66.99173,39.66345,66.99092,39.66274,66.99020,39.66204,66.98947,39.66144,66.98861,39.66142,66.98746,39.66168,66.98635,39.66196,66.98524,39.66224,66.98413,39.66263,66.98309,39.66325,66.98224,39.66390,66.98144,39.66454,66.98063,39.66515,66.97977,39.66558,66.97875,39.66595,66.97770,39.66634,66.97664,39.66672,66.97559,39.66710,66.97453,39.66749,66.97348,39.66787,66.97242,39.66816,66.97132,39.66845,66.97022,39.66930,66.96994,39.67020,66.96981,39.67107,66.96958,39.67194,66.96926,39.67280,66.96894,39.67344,66.96836,39.67327,66.96721,39.67303,66.96609,39.67263,66.96507,39.67195,66.96435,39.67108,66.96412,39.67019,66.96391,39.66931,66.96371,39.66842,66.96358,39.66752,66.96360,39.66663,66.96370,39.66573,66.96379,39.66484,66.96388,39.66394,66.96397,39.66305,66.96387,39.66216,66.96375,39.66128,66.96351,39.66042,66.96319,39.65957,66.96279,39.65873,66.96240,39.65788,66.96201,39.65700,66.96184,39.65610,66.96177,39.65521,66.96171,39.65431,66.96167,39.65342,66.96175,39.65253,66.96195,39.65185,66.96264,39.65127,66.96353,39.65063,66.96431,39.64984,66.96383,39.64907,66.96324,39.64831,66.96262,39.64755,66.96200,39.64680,66.96135,39.64605,66.96070,39.64530,66.96006,39.64455,66.95943,39.64380,66.95878,39.64307,66.95816,39.64312,66.95901,39.64387,66.95966,39.64462,66.96030,39.64536,66.96095,39.64611,66.96159,39.64687,66.96223,39.64762,66.96287,39.64837,66.96351,39.64911,66.96416,39.64984,66.96484,39.65057,66.96539,39.65100,66.96443,39.65152,66.96348,39.65205,66.96254,39.65283,66.96201,39.65371,66.96182,39.65461,66.96185,39.65551,66.96192,39.65640,66.96198,39.65730,66.96204,39.65816,66.96233,39.65901,66.96272,39.65985,66.96311,39.66070,66.96349,39.66157,66.96378,39.66246,66.96395,39.66335,66.96407,39.66425,66.96414,39.66514,66.96410,39.66604,66.96399,39.66693,66.96388,39.66783,66.96377,39.66872,66.96381,39.66961,66.96394,39.67050,66.96415,39.67137,66.96439,39.67222,66.96475,39.67279,66.96562,39.67303,66.96674,39.67326,66.96787,39.67304,66.96873,39.67218,66.96908,39.67132,66.96939,39.67044,66.96962,39.66956,66.96985,39.66866,66.96996,39.66812,66.97078,39.66784,66.97189,39.66749,66.97296,39.66713,66.97403,39.66676,66.97510,39.66638,66.97615,39.66599,66.97720,39.66561,66.97826,39.66521,66.97930,39.66464,66.98020,39.66402,66.98104,39.66338,66.98186,39.66273,66.98266,39.66230,66.98368,39.66198,66.98477,39.66171,66.98588,39.66145,66.98700,39.66129,66.98814,39.66165,66.98916,39.66233,66.98992,39.66302,66.99065,39.66374,66.99136,39.66371,66.99232,39.66325,66.99333,39.66280,66.99433,39.66242,66.99539,39.66209,66.99647,39.66176,66.99756,39.66142,66.99864,39.66108,66.99972,39.66074,67.00080,39.66039,67.00187,39.66005,67.00295,39.65973,67.00404,39.65962,67.00520,39.65958,67.00636,39.65962,67.00753,39.65967,67.00869,39.65964,67.00985,39.65954,67.01101,39.65944,67.01217,39.65933,67.01333,39.65922,67.01449,39.65911,67.01564,39.65899,67.01680,39.65888,67.01796,39.65876,67.01911,39.65859,67.02026,39.65834,67.02138,39.65809,67.02250,39.65784,67.02362,39.65760,67.02474,39.65760,67.02590,39.65767,67.02706,39.65773,67.02822,39.65774,67.02800,39.65771,67.02683,39.65768,67.02566,39.65775,67.02451,39.65798,67.02339,39.65823,67.02227,39.65848,67.02115,39.65871,67.02002,39.65887,67.01887,39.65899,67.01772,39.65910,67.01656,39.65920,67.01540,39.65931,67.01424,39.65943,67.01308,39.65954,67.01193,39.65964,67.01077,39.65973,67.00961,39.65973,67.00844,39.65968,67.00728,39.65966,67.00611,39.65972,67.00495,39.65990,67.00382,39.66020,67.00272,39.66055,67.00164,39.66090,67.00057,39.66123,66.99949,39.66157,66.99840,39.66190,66.99732,39.66223,66.99623,39.66256,66.99515,39.66299,66.99413,39.66345,66.99312,39.66390,66.99212,39.66372,66.99120,39.66301,66.99047,39.66230,66.98976,39.66165,66.98897,39.66137,66.98790,39.66158,66.98678,39.66186,66.98567,39.66213,66.98455,39.66245,66.98347,39.66300,66.98255,39.66363,66.98173,39.66426,66.98090,39.66489,66.98007,39.66544,66.97916,39.66582,66.97810,39.66620,66.97704,39.66658,66.97599,39.66696,66.97493,39.66735,66.97388,39.66775,66.97283,39.66805,66.97174,39.66831,66.97062,39.66896,66.97002,39.66985,66.96987,39.67074,66.96969,39.67161,66.96941,39.67247,66.96906,39.67332,66.96871,39.67334,66.96764,39.67312,66.96651,39.67283,66.96541,39.67223,66.96456,39.67140,66.96419,39.67052,66.96396,39.66964,66.96375,39.66875,66.96359,39.66785,66.96359,39.66696,66.96367,39.66606,66.96376,39.66517,66.96385,39.66427,66.96395,39.66338,66.96390,39.66249,66.96375,39.66160,66.96358,39.66073,66.96327,39.65988,66.96290,39.65903,66.96253,39.65819,66.96213,39.65733,66.96185,39.65643,66.96178,39.65554,66.96172,39.65464,66.96165,39.65374,66.96167,39.65286,66.96188,39.65205,66.96230,39.65148,66.96319,39.65090,66.96409,39.65011,66.96405,39.64935,66.96344,39.64858,66.96283,39.64782,66.96221,39.64706,66.96158,39.64630,66.96096,39.64556,66.96030,39.64482,66.95965,39.64408,66.95899,39.64333,66.95834,39.64283,66.95878,39.64357,66.95945,39.64430,66.96012,39.64503,66.96079,39.64577,66.96145,39.64653,66.96209,39.64728,66.96272,39.64804,66.96335,39.64876,66.96404,39.64949,66.96472,39.65023,66.96539,39.65087,66.96615,39.65126,66.96721,39.65166,66.96824,39.65205,66.96930,39.65241,66.97037,39.65277,66.97144,39.65310,66.97252,39.65330,66.97365,39.65335,66.97481,39.65340,66.97592,39.65340,66.97592]},
+};
+
+function gainOf(pts){ let g = 0; for (let i = 1; i < pts.length; i++) g += Math.max(0, pts[i][1] - pts[i-1][1]); return g; }
+function interp(pts, x){
+  if (x <= pts[0][0]) return pts[0][1];
+  let lo = 0, hi = pts.length - 1;
+  if (x >= pts[hi][0]) return pts[hi][1];
+  while (hi - lo > 1){ const m = (lo + hi) >> 1; if (pts[m][0] <= x) lo = m; else hi = m; }
+  const [x0, e0] = pts[lo], [x1, e1] = pts[hi];
+  return x1 === x0 ? e1 : e0 + (e1 - e0) * (x - x0) / (x1 - x0);
+}
+function trackPts(ele, D){ return ele.map((e, i) => [Math.min(D, i / 10), e]); }
+function trackGeo(arr, D){ const g = []; for (let i = 0; i < arr.length; i += 2) g.push([arr[i], arr[i+1]]); return g.map((p, i) => ({km: Math.min(D, i / 10), lat: p[0], lon: p[1]})); }
+
+const LAP = 20.1; // marathon lap length between repeated points
+
+const MARATHON_SEGS = (() => {
+  const lap = (o, n) => [
+    {a:o+1.2, b:o+3.9, name:n ? 'Второй круг: на север по Бустонсарой' : 'На север по Бустонсарой', place:'до поворота на Дахбед', short:n ? '2к Бустонсарой' : 'Бустонсарой', tags:n ? ['lap2'] : []},
+    {a:o+3.9, b:o+6.5, name:n ? 'Второй круг: по Дахбеду к Шахи-Зинде' : 'По Дахбеду к Шахи-Зинде', place:'мимо Биби-Ханым, вниз к Шахи-Зинде', short:n ? '2к Дахбед' : 'Дахбед', tags:[]},
+    {a:o+6.5, b:o+10.0, name:n ? 'Второй круг: подъём на восток' : 'Подъём на восток', place:'вдоль Афрасиаба до восточного разворота', short:n ? '2к подъём В' : 'Подъём восток', tags:n ? ['turn','bigclimb','late'] : ['turn','bigclimb']},
+    {a:o+10.0, b:o+13.5, name:n ? 'Второй круг: спуск обратно' : 'Спуск обратно', place:'с разворота к Шахи-Зинде', short:n ? '2к спуск' : 'Спуск назад', tags:[]},
+    {a:o+13.5, b:o+16.1, name:n ? 'Второй круг: обратно по Дахбеду' : 'Обратно по Дахбеду', place:'на север к Бустонсарой', short:n ? '2к Дахбед назад' : 'Дахбед назад', tags:[]},
+    {a:o+16.1, b:o+20.0, name:n ? 'Второй круг: на юг и подъём' : 'На юг и подъём', place:'по Бустонсарой к южному развороту', short:n ? '2к подъём Ю' : 'Подъём юг', tags:['turn','bigclimb']}
+  ];
+  return [
+    {a:0, b:1.2, name:'Старт у Регистана', place:'Регистан, на запад', short:'Старт', tags:['start']},
+    ...lap(0, false),
+    {a:20.0, b:21.1, name:'Спуск, середина дистанции', place:'от южного разворота', short:'Половина', tags:['half']},
+    ...lap(LAP, true).map((s, i) => i === 0 ? Object.assign({}, s, {a:21.1}) : s),
+    {a:40.2, b:MAR, name:'Финиш у Регистана', place:'спуск, затем подъём к Регистану', short:'Финиш', tags:['finish','uphillfinish']}
+  ].map(s => Object.assign({}, s, {b: Math.min(MAR, s.b)})).map((s, i, arr) => i < arr.length - 1 ? Object.assign({}, s, {b: arr[i+1].a}) : s);
+})();
+
+const MODEL = {
+  '5k': {
+    pts: trackPts(TRACK.k5.ele, 5),
+    geo: trackGeo(TRACK.k5.geo, 5),
+    segs: [
+      {a:0, b:1.2, name:'Старт у Регистана', place:'на запад к улице Бустонсарой', short:'Старт', tags:['start']},
+      {a:1.2, b:2.1, name:'Разворот на Бустонсарой', place:'короткий отрезок на север и обратно', short:'Бустонсарой', tags:['turn']},
+      {a:2.1, b:3.06, name:'Подъём к южному развороту', place:'на юг от Бустонсарой', short:'Подъём юг', tags:['turn','bigclimb']},
+      {a:3.06, b:4.0, name:'Спуск обратно', place:'с южного разворота', short:'Спуск', tags:[]},
+      {a:4.0, b:5, name:'Финиш у Регистана', place:'ложбина, затем подъём к Регистану', short:'Финиш', tags:['finish','uphillfinish']}
+    ],
+    aid: [2.1], turns: [1.51, 3.06]
+  },
+  '10k': {
+    pts: trackPts(TRACK.k10.ele, 10),
+    geo: trackGeo(TRACK.k10.geo, 10),
+    segs: [
+      {a:0, b:1.2, name:'Старт у Регистана', place:'на запад к улице Бустонсарой', short:'Старт', tags:['start']},
+      {a:1.2, b:3.96, name:'На север по Бустонсарой', place:'до разворота у Дахбеда', short:'Бустонсарой', tags:['turn']},
+      {a:3.96, b:5.2, name:'Обратно на юг', place:'по Бустонсарой', short:'На юг', tags:[]},
+      {a:5.2, b:8.03, name:'Подъём к южному развороту', place:'через центр на юг', short:'Подъём юг', tags:['turn','bigclimb']},
+      {a:8.03, b:10, name:'Финиш у Регистана', place:'спуск, затем подъём к Регистану', short:'Финиш', tags:['finish','uphillfinish']}
+    ],
+    aid: [3, 4.8, 7], turns: [3.96, 8.03]
+  },
+  'half': {
+    pts: trackPts(TRACK.half.ele, HALF),
+    geo: trackGeo(TRACK.half.geo, HALF),
+    segs: [
+      {a:0, b:1.2, name:'Старт у Регистана', place:'на запад к улице Бустонсарой', short:'Старт', tags:['start']},
+      {a:1.2, b:3.9, name:'На север по Бустонсарой', place:'до поворота на Дахбед', short:'Бустонсарой', tags:[]},
+      {a:3.9, b:6.5, name:'По Дахбеду к Шахи-Зинде', place:'мимо Биби-Ханым, вниз к Шахи-Зинде', short:'Дахбед', tags:[]},
+      {a:6.5, b:9.5, name:'Подъём на восток', place:'вдоль Афрасиаба до восточного разворота', short:'Подъём восток', tags:['turn','bigclimb']},
+      {a:9.5, b:12.5, name:'Спуск обратно', place:'с разворота к Шахи-Зинде', short:'Спуск назад', tags:[]},
+      {a:12.5, b:15.1, name:'Обратно по Дахбеду', place:'на север к Бустонсарой', short:'Дахбед назад', tags:[]},
+      {a:15.1, b:19.1, name:'На юг и подъём', place:'по Бустонсарой к южному развороту', short:'Подъём юг', tags:['turn','bigclimb']},
+      {a:19.1, b:HALF, name:'Финиш у Регистана', place:'спуск, затем подъём к Регистану', short:'Финиш', tags:['finish','uphillfinish']}
+    ],
+    aid: [3, 6, 8.5, 10.5, 13, 16, 18.2], turns: [9.5, 19.1]
+  },
+  'marathon': {
+    pts: trackPts(TRACK.marathon.ele, MAR),
+    geo: trackGeo(TRACK.marathon.geo, MAR),
+    segs: MARATHON_SEGS,
+    aid: [3, 6, 8.5, 11.5, 14, 17, 19.1, 23, 26, 28.5, 31.5, 34, 37, 39.2], turns: [10.0, 20.0, 30.1, 40.2]
+  }
+};
+const LANDMARKS = [
+  {name:'Регистан', lat:39.6547, lon:66.9758, main:true},
+  {name:'Биби-Ханым', lat:39.6607, lon:66.9791},
+  {name:'Шахи-Зинда', lat:39.6630, lon:66.9878},
+  {name:'Афрасиаб', lat:39.6690, lon:66.9990, area:true}
+];
+
+const DIST = {
+  '5k': {id:'5k', D:5, tab:'5 км', title:'5 км', day:'суббота, 7 ноября', start:'16:25', close:'17:15', gain:null,
+    laps:'два разворота', aidText:'вода и туалет на 2,1 км',
+    desc:'Вечерний старт в субботу. От Регистана на запад до улицы Бустонсарой, короткий разворот на север и обратно, затем на юг вверх к развороту на 3 км и вниз. Перед финишем ложбина и последние 500 м в горку к Регистану.',
+    chips:['20:00','22:30','25:00','27:30','30:00','35:00'], def:'25:00', cps:[1,2,3,4,5], kw:.12},
+  '10k': {id:'10k', D:10, tab:'10 км', title:'10 км', day:'воскресенье, 8 ноября', start:'08:45', close:'10:25', gain:null,
+    laps:'два разворота', aidText:'вода и туалет на 3, 4,8 и 7 км',
+    desc:'От Регистана на запад и на север по улице Бустонсарой до разворота у Дахбеда (4 км). Обратно на юг, затем вверх к южному развороту на 8-м км и вниз к финишу у Регистана. Вторая половина заметно тяжелее первой.',
+    chips:['40:00','45:00','50:00','55:00','1:00:00','1:10:00'], def:'50:00', cps:[2.5,5,7.5,10], kw:.18},
+  'half': {id:'half', D:HALF, tab:'21,1 км', title:'полумарафон 21,1 км', day:'воскресенье, 8 ноября', start:'08:10', close:'11:10', gain:60,
+    laps:'один круг, два разворота', aidText:'вода, еда и туалет на 3, 6, 8,5, 10,5, 13, 16 и 18,2 км',
+    desc:'От Регистана на запад и на север по улице Бустонсарой, по Дахбеду мимо Биби-Ханым вниз к Шахи-Зинде. Затем подъём на восток вдоль Афрасиаба до разворота на 9,5 км и обратно. По Дахбеду снова на север, потом по Бустонсарой на юг и вверх к южному развороту на 19,1 км, вниз и последний подъём к Регистану.',
+    chips:['1:30:00','1:40:00','1:45:00','1:50:00','2:00:00','2:15:00','2:30:00'], def:'1:55:00', cps:[5,10,15,20,HALF], kw:.25},
+  'marathon': {id:'marathon', D:MAR, tab:'42,2 км', title:'марафон 42,2 км', day:'воскресенье, 8 ноября', start:'08:00', close:'14:00', gain:120,
+    laps:'два круга по 20,1 км, четыре разворота', aidText:'вода, еда и туалет на 3, 6, 8,5, 11,5, 14, 17, 19,1 км и на тех же точках второго круга (+20 км)',
+    desc:'От Регистана на запад и на север по улице Бустонсарой, по Дахбеду мимо Биби-Ханым вниз к Шахи-Зинде. Затем подъём на восток вдоль Афрасиаба до разворота на 10-м км и обратно, по Дахбеду на север и по Бустонсарой на юг, вверх к южному развороту на 20-м км. Второй круг повторяет первый (развороты на 30,1 и 40,2 км), финиш у Регистана.',
+    chips:['3:00:00','3:15:00','3:30:00','3:45:00','4:00:00','4:30:00','5:00:00'], def:'3:59:00', cps:[5,10,15,20,HALF,25,30,35,40,MAR], kw:.35}
+};
+const ORDER = ['5k','10k','half','marathon'];
+
+/* ---------- State ---------- */
+const KEY = 'samarkand-pace-v2';
+const DEF = {dist:'marathon', mode:'target', targets:{}, resDist:'10', resKm:'', resTime:'50:00', k:'1.06', strategy:'even', temp:'8', gpx:{}};
+let S = Object.assign({}, DEF);
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign({}, DEF, JSON.parse(raw)); } catch (e) {}
+if (!S.targets || typeof S.targets !== 'object') S.targets = {};
+if (!S.gpx || typeof S.gpx !== 'object') S.gpx = {};
+ORDER.forEach(id => { if (!S.targets[id]) S.targets[id] = DIST[id].def; });
+if (!DIST[S.dist]) S.dist = 'marathon';
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+/* ---------- Formatting ---------- */
+const p2 = n => String(n).padStart(2, '0');
+function fmtT(sec){ sec = Math.round(Math.max(0, sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return h ? `${h}:${p2(m)}:${p2(s)}` : `${m}:${p2(s)}`; }
+function fmtPace(sec){ sec = Math.round(sec); return `${Math.floor(sec / 60)}:${p2(sec % 60)}`; }
+function fmtDelta(sec){ const r = Math.round(sec); if (Math.abs(r) < 60) return `${r < 0 ? MINUS : '+'}${Math.abs(r)} с`; return `${r < 0 ? MINUS : '+'}${fmtT(Math.abs(r))}`; }
+function fmtKm(x){ const r = Math.round(x * 10) / 10; return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ','); }
+function fmtPct(g){ const r = Math.round(g * 10) / 10; return `${r > 0 ? '+' : r < 0 ? MINUS : ''}${Math.abs(r).toFixed(1).replace('.', ',')}%`; }
+function clockSec(hhmm){ const [h, m] = hhmm.split(':').map(Number); return h * 3600 + m * 60; }
+function clock(startStr, sec){ let t = Math.round((clockSec(startStr) + sec) / 60); const h = Math.floor(t / 60) % 24, m = t % 60; return `${p2(h)}:${p2(m)}`; }
+function plural(n, a, b, c){ n = Math.abs(n) % 100; const n1 = n % 10; if (n > 10 && n < 20) return c; if (n1 > 1 && n1 < 5) return b; if (n1 === 1) return a; return c; }
+function words(sec){ sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; const out = []; if (h) out.push(`${h} ч`); if (m || h) out.push(`${m} мин`); out.push(`${s} с`); return out.join(' '); }
+
+function fmtDur(sec){ const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60); return [h ? `${h} ч` : '', m ? `${m} мин` : ''].filter(Boolean).join(' '); }
+
+function parseTime(str, D){
+  if (!str) return null;
+  const s = String(str).trim().replace(/[.,\s;]+/g, ':').replace(/[^\d:]/g, '');
+  if (!s) return null;
+  const parts = s.split(':').filter(x => x !== '').map(Number);
+  if (parts.some(isNaN)) return null;
+  let sec;
+  if (parts.length === 3) sec = parts[0] * 3600 + parts[1] * 60 + parts[2];
+  else if (parts.length === 2) sec = (D >= 20 && parts[0] <= 7) ? parts[0] * 3600 + parts[1] * 60 : parts[0] * 60 + parts[1];
+  else if (parts.length === 1) sec = D >= 20 && parts[0] <= 7 ? parts[0] * 3600 : parts[0] * 60;
+  else return null;
+  return sec > 0 ? sec : null;
+}
+
+/* ---------- Effort model ---------- */
+function gapf(g){ g = Math.max(-15, Math.min(15, g)); return g >= 0 ? 1 + 0.0333 * g + 0.0012 * g * g : 1 + 0.025 * g + 0.0013 * g * g; }
+function stratM(s, u){ if (s === 'neg') return 1.015 - 0.03 * u; if (s === 'careful') return u < 0.2 ? 1.02 : 0.995; return 1; }
+function gcls(g){ return g > 0.3 ? 'up' : g < -0.3 ? 'down' : 'flat'; }
+function weatherF(t, kw){ if (!isFinite(t)) return 1; return 1 + (Math.max(0, t - 12) * kw + Math.max(0, -t) * 0.2) / 100; }
+
+function buildProfile(pts, D){
+  const n = Math.ceil(D / STEP - 1e-9), xs = [], es = [];
+  for (let i = 0; i <= n; i++){ const x = Math.min(D, i * STEP); xs.push(x); es.push(interp(pts, x)); }
+  return {xs, es};
+}
+function smooth(arr, k){ return arr.map((_, i) => { let s = 0, c = 0; for (let j = Math.max(0, i - k); j <= Math.min(arr.length - 1, i + k); j++){ s += arr[j]; c++; } return s / c; }); }
+
+function makeCourse(id){
+  const d = DIST[id], M = MODEL[id], G = S.gpx[id];
+  const pts = G ? G.pts : M.pts;
+  const prof = buildProfile(pts, d.D);
+  const n = prof.xs.length - 1, len = [], grd = [], f = [];
+  let w = 0, gain = 0, loss = 0;
+  for (let i = 0; i < n; i++){
+    const L = prof.xs[i+1] - prof.xs[i], de = prof.es[i+1] - prof.es[i];
+    const g = L > 0 ? de / (L * 1000) * 100 : 0;
+    len.push(L); grd.push(g); f.push(gapf(g)); w += L * gapf(g);
+    if (de > 0) gain += de; else loss -= de;
+  }
+  const c = {id, D:d.D, prof, len, grd, f, CF: w / d.D, turns: M.turns, pen: 3 * M.turns.length, aid: M.aid, gain, loss,
+    src: G ? 'gpx' : (M.approx ? 'model' : 'track'), file: G ? G.name : '', geo: G ? (G.geo || null) : (M.geo || null)};
+  c.segs = G ? autoSegs(c) : M.segs;
+  return c;
+}
+function eleAt(c, x){
+  const xs = c.prof.xs, es = c.prof.es; x = Math.max(0, Math.min(c.D, x));
+  let i = Math.min(xs.length - 2, Math.floor(x / STEP + 1e-9));
+  const L = xs[i+1] - xs[i];
+  return L > 0 ? es[i] + (es[i+1] - es[i]) * (x - xs[i]) / L : es[i];
+}
+function gainLoss(c, a, b){
+  let g = 0, l = 0; const xs = c.prof.xs, es = c.prof.es;
+  for (let i = 0; i < xs.length - 1; i++){
+    if (xs[i+1] <= a + 1e-9 || xs[i] >= b - 1e-9) continue;
+    const de = es[i+1] - es[i]; if (de > 0) g += de; else l -= de;
+  }
+  return {g, l};
+}
+function autoSegs(c){
+  const parts = [];
+  for (let a = 0; a < c.D - 1e-6; a += 0.5){ const b = Math.min(c.D, a + 0.5); parts.push({a, b}); }
+  const cls = s => gcls((eleAt(c, s.b) - eleAt(c, s.a)) / ((s.b - s.a) * 10));
+  let segs = [];
+  parts.forEach(p => { const k = cls(p); const last = segs[segs.length - 1]; if (last && last.k === k) last.b = p.b; else segs.push({a:p.a, b:p.b, k}); });
+  for (let guard = 0; guard < 200 && segs.length > 1; guard++){
+    let idx = -1, min = 1.2;
+    segs.forEach((s, i) => { const L = s.b - s.a; if (L < min){ min = L; idx = i; } });
+    if (idx < 0) break;
+    const s = segs[idx], prev = segs[idx - 1], next = segs[idx + 1];
+    const into = !prev ? next : !next ? prev : (prev.b - prev.a >= next.b - next.a ? prev : next);
+    into.a = Math.min(into.a, s.a); into.b = Math.max(into.b, s.b); segs.splice(idx, 1);
+    segs.forEach(q => q.k = cls(q));
+    const merged = []; segs.forEach(q => { const last = merged[merged.length - 1]; if (last && last.k === q.k){ last.b = q.b; } else merged.push(q); }); segs = merged;
+  }
+  const names = {up:'Подъём', down:'Спуск', flat:'Ровный участок'};
+  return segs.map((s, i) => ({a:s.a, b:s.b, name:names[s.k], place:`${fmtKm(s.a)}–${fmtKm(s.b)} км`, short:names[s.k], tags: i === 0 ? ['start'] : i === segs.length - 1 ? ['finish'] : []}));
+}
+
+function makePlan(c, T, strategy){
+  const n = c.len.length, xs = c.prof.xs; let Ssum = 0; const m = [];
+  for (let i = 0; i < n; i++){ m.push(stratM(strategy, (xs[i] + c.len[i] / 2) / c.D)); Ssum += c.len[i] * c.f[i] * m[i]; }
+  const base = (T - c.pen) / Ssum, cum = [0];
+  for (let i = 0; i < n; i++){
+    let dt = c.len[i] * base * c.f[i] * m[i];
+    c.turns.forEach(t => { if (t >= xs[i] && t < xs[i+1]) dt += 3; });
+    cum.push(cum[i] + dt);
+  }
+  const timeAt = x => {
+    x = Math.max(0, Math.min(c.D, x));
+    const i = Math.min(n - 1, Math.floor(x / STEP + 1e-9)); const L = xs[i+1] - xs[i];
+    return L > 0 ? cum[i] + (cum[i+1] - cum[i]) * (x - xs[i]) / L : cum[i];
+  };
+  const kms = [];
+  for (let a = 0; a < c.D - 1e-6; a += 1){ const b = Math.min(c.D, a + 1); const t = timeAt(b) - timeAt(a); kms.push({a, b, t, pace: t / (b - a), cum: timeAt(b), de: eleAt(c, b) - eleAt(c, a)}); }
+  return {T, timeAt, kms, avg: T / c.D};
+}
+
+/* ---------- Compute ---------- */
+const cache = {};
+function course(id){ if (!cache[id]) cache[id] = makeCourse(id); return cache[id]; }
+let CUR = null;
+
+function compute(){
+  const d = DIST[S.dist], c = course(S.dist);
+  const temp = parseFloat(S.temp); const W = weatherF(temp, d.kw);
+  let T = null, err = '', resD = null, resT = null;
+  if (S.mode === 'target'){
+    T = parseTime(S.targets[S.dist], d.D);
+    if (!T) err = 'Введите время, например ' + d.def;
+  } else {
+    resD = S.resDist === 'other' ? parseFloat(String(S.resKm).replace(',', '.')) : parseFloat(S.resDist);
+    resT = parseTime(S.resTime, resD || 0);
+    if (!resD || resD < 1 || resD > 60) err = 'Укажите дистанцию от 1 до 60 км';
+    else if (!resT) err = 'Введите время, например 48:30 или 1:45:00';
+    else {
+      const pace = resT / resD;
+      if (pace < 150 || pace > 720) err = `Темп ${fmtPace(pace)} /км выглядит нереально. Проверьте формат: 48:30 или 1:45:00`;
+      else T = predictFor(S.dist, resD, resT, W);
+    }
+  }
+  if (T && S.mode === 'target'){
+    const pace = T / d.D;
+    if (pace < 150) err = `Это быстрее ${fmtPace(150)} /км. Проверьте формат: для ${d.tab} например ${d.def}`;
+    else if (pace > 720) err = `Это медленнее 12:00 /км. Проверьте формат: например ${d.def}`;
+    if (err) T = null;
+  }
+  return {d, c, T, err, W, resD, resT, temp};
+}
+function predictFor(id, resD, resT, W){
+  const d = DIST[id], c = course(id), k = parseFloat(S.k) || 1.06;
+  const flat = resT * Math.pow(d.D / resD, k);
+  const w = W != null ? W : weatherF(parseFloat(S.temp), d.kw);
+  return (flat * c.CF + c.pen) * w;
+}
+
+/* ---------- Render ---------- */
+function update(){
+  const r = compute();
+  renderInputs(r);
+  if (!r.T){ return; }
+  const p = makePlan(r.c, r.T, S.strategy);
+  CUR = {c:r.c, p, d:r.d, r};
+  renderResult(r, p);
+  renderChart();
+  renderCourse(r.c, r.d);
+  renderMap();
+  renderCP(r.c, p, r.d);
+  renderCard(r.c, p, r.d);
+  renderGuide(r.c, p, r.d);
+  renderSplits(r.c, p, r.d);
+}
+
+function renderInputs(r){
+  const d = r.d;
+  $$('#distTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d === S.dist)));
+  $('#distWhen').textContent = `Старт: ${d.day}, ${d.start}`;
+  $$('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === S.mode)));
+  $('#paneTarget').hidden = S.mode !== 'target';
+  $('#paneResult').hidden = S.mode !== 'predict';
+  $('#resKmWrap').hidden = S.resDist !== 'other';
+  $('#target').placeholder = d.def;
+  const chips = $('#chips');
+  if (chips.dataset.d !== S.dist){
+    chips.innerHTML = d.chips.map(v => `<button type="button" data-v="${v}">${d.D >= 20 ? v.replace(/:00$/, '') : v}</button>`).join('');
+    chips.dataset.d = S.dist;
+  }
+  const curT = parseTime(S.targets[S.dist], d.D);
+  $$('#chips button').forEach(b => b.setAttribute('aria-pressed', String(curT != null && parseTime(b.dataset.v, d.D) === curT)));
+  const th = $('#targetHint'), rh = $('#resHint');
+  if (S.mode === 'target'){
+    th.className = 'hint' + (r.err ? ' err' : '');
+    th.textContent = r.err ? r.err : (curT ? `= ${words(curT)}, средний темп ${fmtPace(curT / d.D)} /км` : '');
+  } else {
+    rh.className = 'hint' + (r.err ? ' err' : '');
+    rh.textContent = r.err ? r.err : (r.resT ? `= ${words(r.resT)}, темп ${fmtPace(r.resT / r.resD)} /км` : '');
+  }
+  const t = r.temp;
+  $('#tempHint').textContent = !isFinite(t) ? 'Без температуры погода не учитывается.' :
+    (r.W > 1.0005 ? `При ${Math.round(t)} °C ${d.tab} примерно на ${((r.W - 1) * 100).toFixed(1).replace('.', ',')}% медленнее, чем в прохладу.` :
+    `При ${Math.round(t)} °C погода не замедляет. Утро в начале ноября в Самарканде обычно прохладное, поставьте прогноз ближе к старту.`);
+}
+
+function renderResult(r, p){
+  const d = r.d, c = r.c, T = r.T;
+  $('#resLabel').textContent = S.mode === 'target' ? `План на финиш, ${d.title}` : `Ожидаемое время, ${d.title}`;
+  $('#rTime').textContent = fmtT(T);
+  const Tw = T / r.W, flat = (Tw - c.pen) / c.CF, relief = Tw - flat, weather = T - Tw;
+  const limit = clockSec(d.close) - clockSec(d.start), margin = limit - T;
+  const rows = [
+    ['Средний темп', `${fmtPace(T / d.D)} <small>/км</small>`],
+    ['Финиш на часах', `≈ ${clock(d.start, T)} <small style="display:block">старт в ${d.start}</small>`],
+    ['На ровной трассе в прохладу', fmtT(flat)],
+    ['Рельеф трассы', relief >= 1 ? `${fmtDelta(relief)}` : 'без потерь'],
+    ['Погода', weather >= 1 ? fmtDelta(weather) : 'без потерь'],
+    [`До закрытия трассы в ${d.close}`, margin >= 0 ? `<span class="good">запас ${fmtT(margin)}</span>` : `<span class="bad">не успеваете на ${fmtT(-margin)}</span>`]
+  ];
+  $('#facts').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  const pred = $('#pred');
+  pred.hidden = S.mode !== 'predict';
+  if (S.mode === 'predict' && r.resD && r.resT){
+    const rowsP = ORDER.map(id => { const t = predictFor(id, r.resD, r.resT); return `<tr tabindex="0" data-d="${id}" class="${id === S.dist ? 'cur' : ''}"><td>${DIST[id].tab}</td><td>${fmtT(t)}</td><td>${fmtPace(t / DIST[id].D)} /км</td></tr>`; }).join('');
+    $('#predTable').innerHTML = `<thead><tr><th>Дистанция</th><th>На этой трассе</th><th>Темп</th></tr></thead><tbody>${rowsP}</tbody>`;
+  }
+}
+
+function renderChart(){
+  if (!CUR) return;
+  const wrap = $('#chart'), {c, p, d} = CUR;
+  const W = Math.max(300, Math.round(wrap.clientWidth || 800)), mob = W < 600;
+  const mL = mob ? 34 : 44, mR = 8, mT = 40, hP = mob ? 150 : 200, gap = 34, hB = mob ? 72 : 96, mB = 24;
+  const H = mT + hP + gap + hB + mB, pw = W - mL - mR, D = c.D;
+  const X = x => mL + x / D * pw;
+  const xs = c.prof.xs, es = c.prof.es, n = c.len.length;
+  let lo = Math.min(...es), hi = Math.max(...es);
+  if (hi - lo < 50){ const mid = (hi + lo) / 2; lo = mid - 25; hi = mid + 25; } else { lo -= 4; hi += 4; }
+  const yb = mT + hP, Y = e => yb - (e - lo) / (hi - lo) * hP;
+  const o = [];
+  const span = hi - lo, st = span <= 60 ? 10 : span <= 150 ? 25 : 50;
+  for (let v = Math.ceil(lo / st) * st; v <= hi; v += st){ const y = Y(v).toFixed(1); o.push(`<line class="gridl" x1="${mL}" x2="${W - mR}" y1="${y}" y2="${y}"/><text class="ax" x="${mL - 6}" y="${(+y + 4).toFixed(1)}" text-anchor="end">${v}</text>`); }
+  o.push(`<text class="ax" x="${mL - 6}" y="${mT - 2}" text-anchor="end">м</text>`);
+  let i = 0;
+  while (i < n){
+    const k = gcls(c.grd[i]); let j = i; while (j < n && gcls(c.grd[j]) === k) j++;
+    let dp = `M${X(xs[i]).toFixed(1)},${yb}`;
+    for (let q = i; q <= j; q++) dp += `L${X(xs[q]).toFixed(1)},${Y(es[q]).toFixed(1)}`;
+    dp += `L${X(xs[j]).toFixed(1)},${yb}Z`; o.push(`<path class="a-${k}" d="${dp}"/>`); i = j;
+  }
+  o.push(`<path class="pline" d="${xs.map((x, q) => `${q ? 'L' : 'M'}${X(x).toFixed(1)},${Y(es[q]).toFixed(1)}`).join('')}"/>`);
+  o.push(`<line class="gridl" x1="${mL}" x2="${W - mR}" y1="${yb}" y2="${yb}"/>`);
+  const avg = p.avg, rowEnd = [-1e9, -1e9], lw = 32;
+  c.segs.forEach(s => {
+    if (s.a > 0) o.push(`<line class="segline" x1="${X(s.a).toFixed(1)}" x2="${X(s.a).toFixed(1)}" y1="${mT - 6}" y2="${yb}"/>`);
+    const pace = (p.timeAt(s.b) - p.timeAt(s.a)) / (s.b - s.a), dv = pace - avg;
+    const k = dv > 2 ? 'up' : dv < -2 ? 'down' : 'flat', cx = (X(s.a) + X(s.b)) / 2;
+    let row = cx - lw / 2 > rowEnd[0] + 4 ? 0 : cx - lw / 2 > rowEnd[1] + 4 ? 1 : -1;
+    if (row < 0) return;
+    rowEnd[row] = cx + lw / 2;
+    o.push(`<text class="plabel p-${k}" x="${cx.toFixed(1)}" y="${row ? 32 : 15}" text-anchor="middle">${fmtPace(pace)}</text>`);
+  });
+  c.aid.forEach(a => o.push(`<circle class="aidm" cx="${X(a).toFixed(1)}" cy="${yb}" r="4"/>`));
+  c.turns.forEach(t => o.push(`<circle class="turnm" cx="${X(t).toFixed(1)}" cy="${Y(eleAt(c, t)).toFixed(1)}" r="5"/>`));
+  // per-km deviation bars
+  const yb0 = yb + gap + hB / 2, half = hB / 2 - 4;
+  const devs = p.kms.map(k => k.pace - avg), mx = Math.max(5, ...devs.map(Math.abs)), sc = half / mx;
+  o.push(`<text class="ax" x="${mL}" y="${yb + gap - 10}">с/км к среднему темпу ${fmtPace(avg)}</text>`);
+  o.push(`<line class="gridl" x1="${mL}" x2="${W - mR}" y1="${yb0}" y2="${yb0}"/>`);
+  p.kms.forEach((k, q) => {
+    const dv = devs[q], x0 = X(k.a) + (pw / D > 6 ? 1 : 0.3), x1 = X(k.b) - (pw / D > 6 ? 1 : 0.3), h = Math.max(1, Math.abs(dv) * sc);
+    const cl = dv > 1 ? 'up' : dv < -1 ? 'down' : 'flat';
+    o.push(`<rect class="b-${cl}" x="${x0.toFixed(1)}" y="${(dv > 0 ? yb0 - h : yb0).toFixed(1)}" width="${Math.max(1, x1 - x0).toFixed(1)}" height="${h.toFixed(1)}" rx="1"/>`);
+  });
+  o.push(`<text class="ax" x="${mL - 6}" y="${(yb0 - half + 4).toFixed(1)}" text-anchor="end">+${Math.round(mx)}</text>`);
+  o.push(`<text class="ax" x="${mL - 6}" y="${(yb0 + 4).toFixed(1)}" text-anchor="end">0</text>`);
+  o.push(`<text class="ax" x="${mL - 6}" y="${(yb0 + half + 4).toFixed(1)}" text-anchor="end">${MINUS}${Math.round(mx)}</text>`);
+  // x ticks
+  const tick = D > 30 ? 5 : D > 15 ? (mob ? 5 : 2) : 1;
+  for (let x = 0; X(D) - X(x) > 52; x += tick){
+    o.push(`<line class="gridl" x1="${X(x).toFixed(1)}" x2="${X(x).toFixed(1)}" y1="${yb}" y2="${yb + 4}"/><text class="ax" x="${X(x).toFixed(1)}" y="${H - 6}" text-anchor="${x === 0 ? 'start' : 'middle'}">${x}</text>`);
+  }
+  o.push(`<text class="ax" x="${X(D).toFixed(1)}" y="${H - 6}" text-anchor="end">${fmtKm(D)} км</text>`);
+  o.push(`<line id="hvl" class="hvline" x1="0" x2="0" y1="${mT - 6}" y2="${H - mB}" visibility="hidden"/><circle id="hvd" class="hvdot" r="3.5" cx="0" cy="0" visibility="hidden"/>`);
+  o.push(`<rect id="hit" x="${mL}" y="0" width="${pw}" height="${H}" fill="transparent"/>`);
+  wrap.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Профиль высот трассы ${d.tab} и целевой темп по участкам">${o.join('')}</svg><div class="tip" id="tip"></div>`;
+  const svg = $('svg', wrap), tip = $('#tip'), hvl = $('#hvl'), hvd = $('#hvd');
+  const show = ev => {
+    const rect = svg.getBoundingClientRect(), px = (ev.clientX - rect.left) * (W / rect.width);
+    const km = Math.max(0, Math.min(D, (px - mL) / pw * D));
+    const ki = Math.min(p.kms.length - 1, Math.floor(km)), seg = c.segs.find(s => km >= s.a && km <= s.b) || c.segs[0];
+    const g = (eleAt(c, Math.min(D, km + 0.1)) - eleAt(c, Math.max(0, km - 0.1))) / ((Math.min(D, km + 0.1) - Math.max(0, km - 0.1)) * 10);
+    const xx = X(km).toFixed(1);
+    hvl.setAttribute('x1', xx); hvl.setAttribute('x2', xx); hvl.setAttribute('visibility', 'visible');
+    hvd.setAttribute('cx', xx); hvd.setAttribute('cy', Y(eleAt(c, km)).toFixed(1)); hvd.setAttribute('visibility', 'visible');
+    tip.innerHTML = `<b>${km.toFixed(1).replace('.', ',')} км</b>, ${seg.name}<br>Высота ≈ ${Math.round(eleAt(c, km))} м, уклон ${fmtPct(g)}<br>Темп ${ki + 1}-го км ${fmtPace(p.kms[ki].pace)} /км<br>Время с начала ${fmtT(p.timeAt(km))}`;
+    tip.style.opacity = '1'; mapDot(km);
+    const tw = tip.offsetWidth, cssX = X(km) * rect.width / W;
+    tip.style.left = Math.max(0, Math.min(rect.width - tw, cssX + 12 + tw > rect.width ? cssX - tw - 12 : cssX + 12)) + 'px';
+  };
+  const hide = () => { tip.style.opacity = '0'; hvl.setAttribute('visibility', 'hidden'); hvd.setAttribute('visibility', 'hidden'); mapDot(null); };
+  const hit = $('#hit');
+  hit.addEventListener('pointermove', show); hit.addEventListener('pointerdown', show); hit.addEventListener('pointerleave', hide);
+  $('#legTurn').hidden = !c.turns.length;
+  $('#profSrc').innerHTML = c.src === 'gpx'
+    ? `Профиль из вашего GPX <b>${esc(c.file)}</b>: набор ${Math.round(c.gain)} м, сброс ${Math.round(c.loss)} м`
+    : c.src === 'track'
+      ? `Официальный профиль организатора: набор <b>${Math.round(c.gain)} м</b>, высоты ${Math.round(Math.min(...c.prof.es))}–${Math.round(Math.max(...c.prof.es))} м`
+      : `Приблизительный профиль: трек ${d.tab} не опубликован`;
+}
+
+/* ---------- Route map ---------- */
+const KXM = Math.cos(39.66 * Math.PI / 180);
+function mdist(a, b){ return Math.hypot((a.lat - b.lat) * 111200, (a.lon - b.lon) * 111200 * KXM); }
+let MAP = null;
+function renderMap(){
+  if (!CUR) return;
+  const wrap = $('#map'), {c, p, d} = CUR;
+  if (!c.geo){
+    MAP = null;
+    wrap.innerHTML = `<div class="map-empty">Трек ${d.tab} не опубликован, поэтому схемы нет. Трассы полумарафона и марафона на соседних вкладках.</div>`;
+    $('#mapSub').hidden = true; return;
+  }
+  $('#mapSub').hidden = false;
+  const W = Math.max(280, Math.round(wrap.clientWidth || 520)), pad = W < 420 ? 18 : 26;
+  const geo = c.geo;
+  const bLat = [Math.min(...geo.map(g => g.lat)), Math.max(...geo.map(g => g.lat))], bLon = [Math.min(...geo.map(g => g.lon)), Math.max(...geo.map(g => g.lon))];
+  const LM = LANDMARKS.filter(l => l.lat > bLat[0] - 0.003 && l.lat < bLat[1] + 0.003 && l.lon > bLon[0] - 0.003 && l.lon < bLon[1] + 0.003);
+  const all = geo.concat(LM.filter(l => !l.area));
+  const minLat = Math.min(...all.map(g => g.lat)), maxLat = Math.max(...all.map(g => g.lat));
+  const minLon = Math.min(...all.map(g => g.lon)), maxLon = Math.max(...all.map(g => g.lon));
+  const spanX = (maxLon - minLon) * KXM, spanY = maxLat - minLat, maxH = Math.max(300, W * 0.9);
+  const sc = Math.min((W - 2 * pad) / spanX, (maxH - 2 * pad - 18) / spanY), H = Math.round(spanY * sc + 2 * pad + 18);
+  const offX = Math.max(pad, (W - spanX * sc) / 2);
+  const P = g => [offX + (g.lon - minLon) * KXM * sc, pad + 10 + (maxLat - g.lat) * sc];
+  const o = [];
+  const path = geo.map((g, i) => { const [x, y] = P(g); return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`; }).join('');
+  LM.filter(l => l.area).forEach(l => { const [x, y] = P(l); if (x > pad + 40 && x < W - pad - 40 && y > pad + 24) o.push(`<text class="lm-area" x="${x.toFixed(1)}" y="${(y - 14).toFixed(1)}" text-anchor="middle">${l.name}</text>`); });
+  o.push(`<path class="rt-halo" d="${path}"/><path class="rt" d="${path}"/>`);
+  const at = km => geo[Math.max(0, Math.min(geo.length - 1, Math.round(km * 10)))];
+  // group points that share a location (out-and-back, two laps)
+  const group = kms => { const gs = []; kms.forEach(k => { const g = at(k); const hit = gs.find(q => mdist(q.g, g) < 160); if (hit) hit.kms.push(k); else gs.push({g, kms:[k]}); }); return gs; };
+  group(c.aid).forEach(q => { const [x, y] = P(q.g); o.push(`<circle class="aidm" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"/>`); });
+  group(c.turns).forEach(q => {
+    const [x, y] = P(q.g), right = x > W * 0.62, low = y > H * 0.7;
+    o.push(`<circle class="tam" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"/>`);
+    o.push(`<text class="ta-t lm-t" x="${(right ? x - 10 : x + 10).toFixed(1)}" y="${(low ? y + 4 : y + 18).toFixed(1)}" text-anchor="${right ? 'end' : 'start'}">разворот ${q.kms.map(fmtKm).join(' и ')} км</text>`);
+  });
+  LM.filter(l => !l.area && !l.main).forEach(l => { const [x, y] = P(l); o.push(`<circle class="lm" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3"/><text class="lm-t" x="${(x + 7).toFixed(1)}" y="${(y + 15).toFixed(1)}">${l.name}</text>`); });
+  const [sx, sy] = P(geo[0]);
+  o.push(`<rect class="sf" x="${(sx - 7).toFixed(1)}" y="${(sy - 7).toFixed(1)}" width="14" height="14" rx="3"/><text class="lm-t" x="${(sx > W * 0.55 ? sx + 7 : sx + 11).toFixed(1)}" y="${(sy + 22).toFixed(1)}" text-anchor="${sx > W * 0.55 ? 'end' : 'start'}">Регистан, старт и финиш</text>`);
+  const kmPx = sc / 111.2;
+  o.push(`<line class="scale" x1="${pad}" x2="${(pad + kmPx).toFixed(1)}" y1="${H - 10}" y2="${H - 10}"/><line class="scale" x1="${pad}" x2="${pad}" y1="${H - 14}" y2="${H - 6}"/><line class="scale" x1="${(pad + kmPx).toFixed(1)}" x2="${(pad + kmPx).toFixed(1)}" y1="${H - 14}" y2="${H - 6}"/><text class="ax" x="${(pad + kmPx + 6).toFixed(1)}" y="${H - 6}">1 км</text>`);
+  o.push(`<text class="ax" x="${W - pad}" y="${pad}" text-anchor="end">↑ север</text>`);
+  o.push(`<circle id="mdot" class="mapdot" r="7" cx="0" cy="0" visibility="hidden"/>`);
+  wrap.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Схема трассы ${d.tab}">${o.join('')}</svg><div class="tip" id="mtip"></div>`;
+  MAP = {P, at, W, H};
+  const svg = $('svg', wrap), tip = $('#mtip'), dot = $('#mdot');
+  const show = ev => {
+    const r = svg.getBoundingClientRect(), k = W / r.width, px = (ev.clientX - r.left) * k, py = (ev.clientY - r.top) * k;
+    let bi = -1, bd = 1e9;
+    geo.forEach((g, i) => { const [x, y] = P(g); const dd = Math.hypot(x - px, y - py); if (dd < bd){ bd = dd; bi = i; } });
+    if (bd > 24){ hide(); return; }
+    const g0 = geo[bi], runs = [];
+    geo.forEach((g, i) => { const dd = mdist(g, g0); if (dd < 70){ const last = runs[runs.length - 1]; if (last && i - last.end <= 3){ last.end = i; if (dd < last.dd){ last.dd = dd; last.i = i; } } else runs.push({i, end:i, dd}); } });
+    const kms = runs.map(q => geo[q.i].km);
+    const [x, y] = P(g0);
+    dot.setAttribute('cx', x.toFixed(1)); dot.setAttribute('cy', y.toFixed(1)); dot.setAttribute('visibility', 'visible');
+    tip.innerHTML = `<b>Здесь вы будете</b><br>` + kms.map(km => { const t = p.timeAt(km); return `${fmtKm(km)} км: ${fmtT(t)}, на часах ${clock(d.start, t)}`; }).join('<br>');
+    tip.style.opacity = '1';
+    const tw = tip.offsetWidth, th = tip.offsetHeight, cx = x / k, cy = y / k;
+    tip.style.left = Math.max(0, Math.min(r.width - tw, cx + 14 + tw > r.width ? cx - tw - 14 : cx + 14)) + 'px';
+    tip.style.top = Math.max(0, Math.min(r.height - th, cy - th / 2)) + 'px';
+  };
+  const hide = () => { tip.style.opacity = '0'; dot.setAttribute('visibility', 'hidden'); };
+  svg.addEventListener('pointermove', show); svg.addEventListener('pointerdown', show); svg.addEventListener('pointerleave', hide);
+}
+function mapDot(km){
+  const dot = $('#mdot'); if (!dot || !MAP) return;
+  if (km == null){ dot.setAttribute('visibility', 'hidden'); return; }
+  const [x, y] = MAP.P(MAP.at(km)); dot.setAttribute('cx', x.toFixed(1)); dot.setAttribute('cy', y.toFixed(1)); dot.setAttribute('visibility', 'visible');
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+function renderCP(c, p, d){
+  const limit = clockSec(d.close) - clockSec(d.start);
+  $('#cpSub').textContent = `Старт ${d.day} в ${d.start}. Трасса закрывается в ${d.close}.`;
+  const rows = d.cps.filter(x => x <= c.D + 1e-9).map(x => {
+    const t = p.timeAt(x), last = Math.abs(x - c.D) < 1e-6, hl = last ? 'hl' : (Math.abs(x - HALF) < 1e-6 && c.D > 30 ? 'half' : '');
+    const lbl = last ? `Финиш, ${fmtKm(x)} км` : Math.abs(x - HALF) < 1e-6 ? `${fmtKm(x)} км, половина` : `${fmtKm(x)} км`;
+    return `<tr class="${hl}"><td>${lbl}</td><td>${fmtT(t)}</td><td>${clock(d.start, t)}</td><td>${fmtPace(t / x)}</td></tr>`;
+  }).join('');
+  const margin = limit - p.T;
+  $('#cpTable').innerHTML = `<thead><tr><th>Отметка</th><th>Время</th><th>На часах</th><th>Ср. темп</th></tr></thead><tbody>${rows}
+    <tr><td>Закрытие трассы</td><td>${fmtT(limit)}</td><td>${d.close}</td><td>${margin >= 0 ? `<span class="good">запас ${fmtT(margin)}</span>` : `<span class="bad">${MINUS}${fmtT(-margin)}</span>`}</td></tr></tbody>`;
+}
+
+function renderCard(c, p, d){
+  const L = [], avg = p.avg;
+  const pad = (s, n) => { s = String(s); return s.length >= n ? s.slice(0, n) : s + ' '.repeat(n - s.length); };
+  const padL = (s, n) => { s = String(s); return s.length >= n ? s : ' '.repeat(n - s.length) + s; };
+  L.push(`Samarkand Marathon, ${d.tab}`);
+  L.push(`${S.mode === 'target' ? 'Цель' : 'Прогноз'} ${fmtT(p.T)}, средний ${fmtPace(avg)}/км`);
+  L.push(`Старт ${d.start}, финиш около ${clock(d.start, p.T)}`);
+  L.push('');
+  L.push(pad('Участок', 16) + pad('км', 12) + padL('темп', 5) + '    ' + padL('итого', 7));
+  c.segs.forEach(s => {
+    const t1 = p.timeAt(s.b), pace = (t1 - p.timeAt(s.a)) / (s.b - s.a), dv = pace - avg;
+    const ar = dv > 3 ? '↑' : dv < -3 ? '↓' : '=';
+    L.push(pad(s.short, 16) + pad(`${fmtKm(s.a)}–${fmtKm(s.b)}`, 12) + padL(fmtPace(pace), 5) + ' ' + ar + '  ' + padL(fmtT(t1), 7));
+  });
+  L.push('');
+  const cps = d.cps.filter(x => x <= c.D + 1e-9);
+  L.push('Отметки: ' + cps.map(x => `${fmtKm(x)} км ${fmtT(p.timeAt(x))}`).join(', '));
+  L.push('↑ медленнее среднего, ↓ быстрее, = в среднем темпе');
+  $('#card').textContent = L.join('\n');
+}
+
+function renderGuide(c, p, d){
+  const avg = p.avg;
+  $('#guide').innerHTML = c.segs.map((s, idx) => {
+    const L = s.b - s.a, net = eleAt(c, s.b) - eleAt(c, s.a), g = net / (L * 10), {g: gn, l: ls} = gainLoss(c, s.a, s.b);
+    const t0 = p.timeAt(s.a), t1 = p.timeAt(s.b), pace = (t1 - t0) / L, dv = Math.round(pace - avg);
+    const kind = Math.abs(g) <= 0.3 ? ((gn + ls) / L > 6 ? 'roll' : 'flat') : (g > 0 ? 'up' : 'down');
+    const pillTxt = {up:`подъём ${fmtPct(g)}`, down:`спуск ${fmtPct(g)}`, roll:'горки', flat:'ровно'}[kind];
+    const tx = [];
+    if (kind === 'up') tx.push(`${g > 1.1 ? 'Заметный подъём' : 'Пологий подъём'}, в сумме +${Math.round(gn)} м. Темп ${fmtPace(pace)} на ${Math.abs(dv)} с/км медленнее среднего, и это нормально: так усилие остаётся ровным. Не догоняйте график на подъёме, время вернётся на спусках.`);
+    else if (kind === 'down') tx.push(`${g < -1.1 ? 'Заметный спуск' : 'Пологий спуск'}, в сумме ${MINUS}${Math.round(ls)} м. Можно бежать на ${Math.abs(dv)} с/км быстрее среднего без лишнего усилия: частый шаг, корпус чуть вперёд. Быстрее плана не разгоняйтесь, бёдра ещё пригодятся.`);
+    else if (kind === 'roll') tx.push(`Небольшие подъёмы и спуски (+${Math.round(gn)} / ${MINUS}${Math.round(ls)} м). Темп на часах будет прыгать, держите ровными усилие и дыхание, а в среднем за участок ${fmtPace(pace)}.`);
+    else tx.push(`Почти ровно. Держите ${fmtPace(pace)} на километр.`);
+    const tags = s.tags || [];
+    if (tags.includes('start')) tx.push('На старте плотно: первые 1–2 км не тратьте силы на обгоны. Если первый километр выйдет на 5–10 с медленнее плана, ничего страшного.');
+    if (tags.includes('bigclimb')) tx.push(c.D > 20 ? 'Это один из двух затяжных подъёмов круга. Заходите в него чуть спокойнее, чем хочется: лишний пульс здесь потом дорого обойдётся.' : 'Главный подъём дистанции. Не догоняйте темп на нём: держите усилие, а скорость вернёте на спуске после разворота.');
+    if (tags.includes('turn')) { const t = c.turns.find(x => x > s.a && x <= s.b + 0.05); tx.push(`Разворот${t ? ` на ${fmtKm(t)} км` : ''}: заранее сбросьте скорость, после него разгоняйтесь плавно, без рывка. Сразу за разворотом начинается спуск, дайте ногам покатиться.`); }
+    if (tags.includes('loop')) tx.push('Вокруг комплекса много поворотов. Проходите их по касательной: часы здесь часто добавляют лишние метры, сверяйтесь с отметками километров.');
+    if (tags.includes('half')) tx.push(`Половина дистанции: по плану ${fmtT(p.timeAt(HALF))} на отметке 21,1 км. Дальше второй круг с теми же подъёмами.`);
+    if (tags.includes('lap2')) tx.push('Второй круг: рельеф тот же, но усталость уже накопилась. Если отстаёте от графика больше чем на минуту, не пытайтесь отыграть всё сразу.');
+    if (tags.includes('late')) tx.push('Здесь чаще всего решается марафон. Держите технику, пейте и ешьте на каждом пункте, даже если не хочется.');
+    if (tags.includes('uphillfinish')) tx.push('После южного разворота дорога идёт вниз, но последние 500–600 м к Регистану снова в горку. Не тратьте всё на спуске, оставьте силы на финишный подъём.');
+    else if (tags.includes('finish')) tx.push(c.id === '5k' ? 'Последний километр: прибавляйте с середины, а последние 300 м бегите на всё, что осталось.' : 'Последний участок к Регистану. Если силы остались, прибавляйте с последнего километра.');
+    const aids = c.aid.filter(a => a >= s.a && a < s.b);
+    if (aids.length) tx.push(`Питание примерно на ${aids.map(fmtKm).join(' и ')} км.`);
+    return `<li><span class="gnum" aria-hidden="true">${idx + 1}</span>
+      <div><div class="gname">${esc(s.name)}<span class="pill ${kind}">${pillTxt}</span></div><div class="gkm">${fmtKm(s.a)}–${fmtKm(s.b)} км, ${esc(s.place)}</div></div>
+      <div><div class="gpace">${fmtPace(pace)}</div><div class="gtime">${fmtT(t1 - t0)}, итог ${fmtT(t1)}</div></div>
+      <p class="gtext">${tx.join(' ')}</p></li>`;
+  }).join('');
+}
+
+function renderSplits(c, p, d){
+  const segOf = x => (c.segs.find(s => x >= s.a - 1e-9 && x < s.b - 1e-9) || c.segs[c.segs.length - 1]).name;
+  const rows = p.kms.map((k, i) => {
+    const dv = k.pace - p.avg, cls = dv > 3 ? 'bad' : dv < -3 ? 'good' : '';
+    const de = Math.round(k.de);
+    return `<tr${Math.abs(k.b - HALF) < 1e-6 ? ' class="half"' : ''}><td>${i === p.kms.length - 1 && k.b - k.a < 0.999 ? fmtKm(k.b) : i + 1}</td><td class="l hide-m">${esc(segOf(k.a + 0.5 * (k.b - k.a)))}</td><td>${de > 0 ? '+' + de : de < 0 ? MINUS + Math.abs(de) : '0'} м</td><td><span class="${cls}">${fmtPace(k.pace)}</span></td><td>${fmtT(k.t)}</td><td>${fmtT(k.cum)}</td><td>${clock(d.start, k.cum)}</td></tr>`;
+  }).join('');
+  $('#splits').innerHTML = `<thead><tr><th>Км</th><th class="l hide-m">Участок</th><th>Высота</th><th>Темп</th><th>Время км</th><th>С начала</th><th>На часах</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderCourse(c, d){
+  const limit = clockSec(d.close) - clockSec(d.start);
+  const items = [
+    ['Старт', `${d.day}, ${d.start}`],
+    ['Закрытие трассы', `${d.close}, через ${fmtDur(limit)} после старта`],
+    ['Набор высоты', c.src === 'model' ? `не опубликован, в модели ≈ ${Math.round(c.gain)} м` : `≈ ${Math.round(c.gain)} м по официальному профилю` + (d.gain && c.src === 'track' ? ` (на сайтах-агрегаторах указано ${d.gain} м, с профилем это не сходится)` : '')],
+    ['Формат', d.laps],
+    ['Питание', d.aidText]
+  ];
+  $('#course').innerHTML = items.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('#courseDesc').textContent = d.desc;
+  $('#gpxReset').hidden = !S.gpx[S.dist];
+}
+
+/* ---------- GPX ---------- */
+function hav(a, b){
+  const R = 6371.0088, rad = Math.PI / 180, dLa = (b[0] - a[0]) * rad, dLo = (b[1] - a[1]) * rad;
+  const s = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function parseGPX(text){
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('Файл не читается как GPX. Проверьте, что это .gpx, а не ссылка или картинка.');
+  let nodes = Array.from(doc.getElementsByTagNameNS('*', 'trkpt'));
+  if (nodes.length < 10) nodes = Array.from(doc.getElementsByTagNameNS('*', 'rtept'));
+  if (nodes.length < 10) throw new Error('В файле нет точек трека. Нужен GPX с треком (trkpt).');
+  const pts = []; let dist = 0, prev = null, withEle = 0, lastE = null;
+  nodes.forEach(nd => {
+    const lat = parseFloat(nd.getAttribute('lat')), lon = parseFloat(nd.getAttribute('lon'));
+    if (!isFinite(lat) || !isFinite(lon)) return;
+    const eN = nd.getElementsByTagNameNS('*', 'ele')[0]; let e = eN ? parseFloat(eN.textContent) : NaN;
+    if (isFinite(e)){ withEle++; lastE = e; } else e = lastE;
+    const cur = [lat, lon]; if (prev) dist += hav(prev, cur); prev = cur;
+    pts.push([dist, e, lat, lon]);
+  });
+  if (withEle < pts.length * 0.8) throw new Error('В треке нет высот. Нужен GPX с высотами (тег ele), например экспорт трассы из Strava или Garmin.');
+  const evals = pts.map(q => q[1]).filter(v => v != null);
+  if (Math.max(...evals) - Math.min(...evals) < 1) throw new Error('В этом GPX все высоты одинаковые (обычно 0 м), рельеф взять неоткуда. Нужен трек с настоящими высотами, например экспорт из Strava или Garmin.');
+  const firstE = pts.find(q => q[1] != null)[1];
+  pts.forEach(q => { if (q[1] == null) q[1] = firstE; });
+  const clean = [pts[0]]; pts.forEach(q => { if (q[0] > clean[clean.length - 1][0] + 1e-6) clean.push(q); });
+  return {pts: clean, len: dist};
+}
+function loadGPX(file){
+  const st = $('#gpxStatus');
+  st.className = 'status'; st.textContent = 'Читаю файл…';
+  file.text().then(text => {
+    const r = parseGPX(text), d = DIST[S.dist];
+    let ratio = r.len / d.D, pts = r.pts, note = '';
+    if (S.dist === 'marathon' && ratio > 0.42 && ratio < 0.6){
+      pts = pts.concat(pts.slice(1).map(([x, e, la, lo]) => [x + r.len, e, la, lo])); ratio = (2 * r.len) / d.D;
+      note = ' Это один круг, он продублирован на два.';
+    }
+    if (ratio < 0.8 || ratio > 1.25) throw new Error(`Длина трека ${fmtKm(r.len)} км не похожа на ${d.tab}. Выберите нужную дистанцию вверху и загрузите файл ещё раз.`);
+    const scaled = pts.map(([x, e]) => [x / ratio, e]);
+    const geo = [];
+    const la = pts.map(([x, e, a]) => [x / ratio, a]), lo = pts.map(([x, e, a, b]) => [x / ratio, b]);
+    for (let i = 0; i <= Math.round(d.D * 10); i++){ const x = Math.min(d.D, i / 10); geo.push({km: x, lat: +interp(la, x).toFixed(5), lon: +interp(lo, x).toFixed(5)}); }
+    const prof = buildProfile(scaled, d.D), es = smooth(prof.es, 4), out = [];
+    for (let i = 0; i < prof.xs.length; i += 2) out.push([+prof.xs[i].toFixed(3), +es[i].toFixed(1)]);
+    if (out[out.length - 1][0] < d.D) out.push([d.D, +es[es.length - 1].toFixed(1)]);
+    S.gpx[S.dist] = {name: file.name, pts: out, geo};
+    delete cache[S.dist]; save(); update();
+    const c = course(S.dist);
+    st.className = 'status ok';
+    st.textContent = `Загружено: ${file.name}, ${fmtKm(r.len)} км по треку, набор ${Math.round(c.gain)} м.${note}` + (Math.abs(ratio - 1) > 0.03 ? ' Длина подогнана под официальную дистанцию.' : '');
+  }).catch(err => { st.className = 'status err'; st.textContent = err.message || 'Не удалось прочитать файл.'; });
+}
+
+/* ---------- Tiles (Registan-style 8-point stars) ---------- */
+function drawTiles(){
+  const cs = getComputedStyle(document.documentElement);
+  const bg = cs.getPropertyValue('--lapis-deep').trim() || '#183c6e', a = cs.getPropertyValue('--turq').trim() || '#08838c', b = cs.getPropertyValue('--ochre').trim() || '#b06808';
+  $$('canvas.tiles').forEach(cv => {
+    const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    const dpr = window.devicePixelRatio || 1; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    const u = h * 1.15, r = h * 0.36;
+    for (let x = u / 2, k = 0; x < w + u; x += u, k++){
+      g.fillStyle = a;
+      [0, Math.PI / 4].forEach(rot => { g.save(); g.translate(x, h / 2); g.rotate(rot); g.fillRect(-r, -r, r * 2, r * 2); g.restore(); });
+      g.fillStyle = bg; g.beginPath(); g.arc(x, h / 2, r * 0.55, 0, Math.PI * 2); g.fill();
+      g.fillStyle = b; g.beginPath(); g.arc(x, h / 2, r * 0.3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = b; g.save(); g.translate(x + u / 2, h / 2); g.rotate(Math.PI / 4); g.fillRect(-h * 0.09, -h * 0.09, h * 0.18, h * 0.18); g.restore();
+    }
+  });
+}
+
+/* ---------- Events ---------- */
+function setDist(id){
+  if (!DIST[id] || id === S.dist && CUR && CUR.d.id === id) return;
+  S.dist = id; save();
+  $('#target').value = S.targets[id] || '';
+  if (location.hash !== '#' + id){ try { history.replaceState(null, '', '#' + id); } catch (e) { location.hash = id; } }
+  update();
+}
+$('#distTabs').addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (b) setDist(b.dataset.d); });
+window.addEventListener('hashchange', () => { const id = location.hash.slice(1); if (DIST[id]) setDist(id); });
+$$('.seg button').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.mode; save(); update(); }));
+$('#chips').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; S.targets[S.dist] = b.dataset.v; $('#target').value = b.dataset.v; save(); update(); });
+$('#target').addEventListener('input', e => { S.targets[S.dist] = e.target.value; save(); update(); });
+$('#resDist').addEventListener('change', e => { S.resDist = e.target.value; save(); update(); });
+$('#resKm').addEventListener('input', e => { S.resKm = e.target.value; save(); update(); });
+$('#resTime').addEventListener('input', e => { S.resTime = e.target.value; save(); update(); });
+$('#riegel').addEventListener('change', e => { S.k = e.target.value; save(); update(); });
+$('#strategy').addEventListener('change', e => { S.strategy = e.target.value; save(); update(); });
+$('#temp').addEventListener('input', e => { S.temp = e.target.value; save(); update(); });
+$('#form').addEventListener('submit', e => e.preventDefault());
+$('#predTable').addEventListener('click', e => { const tr = e.target.closest('tr[data-d]'); if (tr) setDist(tr.dataset.d); });
+$('#predTable').addEventListener('keydown', e => { const tr = e.target.closest('tr[data-d]'); if (tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); setDist(tr.dataset.d); } });
+$('#copyBtn').addEventListener('click', () => {
+  const st = $('#copyStatus'), txt = $('#card').textContent;
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#card')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); st.className = 'status err'; st.textContent = 'Браузер не дал скопировать. Текст выделен, нажмите Ctrl+C или «Копировать».'; };
+  try {
+    navigator.clipboard.writeText(txt).then(() => { st.className = 'status ok'; st.textContent = 'Скопировано'; }, fallback);
+  } catch (e) { fallback(); }
+});
+$('#gpxFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadGPX(f); e.target.value = ''; });
+$('#gpxReset').addEventListener('click', () => { delete S.gpx[S.dist]; delete cache[S.dist]; save(); update(); const st = $('#gpxStatus'); st.className = 'status'; st.textContent = 'Вернул трассу по умолчанию.'; });
+
+let raf = 0;
+const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderChart(); renderMap(); drawTiles(); }); };
+if (window.ResizeObserver){ const ro = new ResizeObserver(onResize); ro.observe($('#chart')); ro.observe($('#map')); } else window.addEventListener('resize', onResize);
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawTiles); } catch (e) {}
+new MutationObserver(drawTiles).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+
+/* ---------- Init ---------- */
+const h0 = location.hash.slice(1); if (DIST[h0]) S.dist = h0;
+$('#target').value = S.targets[S.dist] || '';
+$('#resDist').value = S.resDist; $('#resKm').value = S.resKm; $('#resTime').value = S.resTime;
+$('#riegel').value = S.k; $('#strategy').value = S.strategy; $('#temp').value = S.temp;
+update();
+drawTiles();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { renderChart(); });
+})();
+</script>
+</body>
+</html>
